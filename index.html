@@ -175,6 +175,23 @@ body>.ghost{position:fixed;margin:0;z-index:12;pointer-events:none;transform-ori
 .fim{position:absolute;inset:0;background:rgba(10,6,12,.82);display:grid;place-items:center;z-index:10}
 .fim>div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 24px;text-align:center;display:flex;flex-direction:column;gap:12px}
 .fim h2{margin:0;font-family:'Cinzel',Georgia,serif;color:var(--gold)}
+
+/* 1×1 online (telas I1–I7 aprovadas em 2026-10-27) */
+.pn{display:flex;flex-direction:column;gap:12px;width:330px;max-width:calc(100% - 32px);text-align:left}
+.pn h2{text-align:center}.pn>span{text-align:center;line-height:1.35}
+.pn small{color:#9d90a8;font-size:12px;line-height:1.35;text-align:center}.pn small.err{color:#ff8a9a;font-weight:700}
+.pn .btn{min-height:48px;font-size:15px;text-align:left;padding:8px 14px;display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.pn .btn.c{align-items:center;text-align:center}
+.pn .btn em{font-style:normal;font-weight:500;font-size:12.5px;opacity:.85}
+.pn label{display:flex;flex-direction:column;gap:6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#9d90a8}
+.pn input{background:#1d1626;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font:inherit;font-size:16px}
+.pn input.code{font-family:'Cinzel',Georgia,serif;font-size:26px;text-align:center;letter-spacing:.3em;text-transform:uppercase}
+.radar{position:relative;height:120px;display:grid;place-items:center}
+.radar i{position:absolute;width:var(--s);height:calc(var(--s)*.866);clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);background:rgba(246,224,160,var(--o))}
+.cod{position:relative;display:flex;justify-content:center;gap:8px}.cod b{width:52px;height:64px;border-radius:10px;display:grid;place-items:center;background:#f4eddc;color:#2a1d10;font-family:'Cinzel',Georgia,serif;font-size:32px}
+.link{font-size:13px;color:var(--pale);text-align:center;word-break:break-all;user-select:all;-webkit-user-select:all}
+.rival{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#e3d8bf}.rival i{width:8px;height:8px;border-radius:50%;background:#78d08a}.rival.off i{background:#e0455c}
+.relogio{font-family:'Cinzel',Georgia,serif;font-size:34px;color:var(--pale);text-align:center}
 </style>
 </head>
 <body>
@@ -183,12 +200,14 @@ body>.ghost{position:fixed;margin:0;z-index:12;pointer-events:none;transform-ori
 <script>
 // Regras aprovadas em 2026-10-24 (prototipos/hex/README.md, "Regras aprovadas do Campo aberto").
 Object.assign(RULES,{moveAll:true,aiAppr:1.2,aiDang:0.5,recycle:true,homeDef:1,thorns:1,noBackOnKill:true,siege:2,firstNoPlay:true,spyMid:2,coins0:1});
-const ME=0,IA=1,W=82,H=W*.866,GAP=Math.round(W*.06),SX=.75*W+GAP,SY=H+GAP;
+let ME=0,IA=1; // no 1×1 online, quem entra joga com o lado 1 (ver conectar)
+const W=82,H=W*.866,GAP=Math.round(W*.06),SX=.75*W+GAP,SY=H+GAP;
 const TXT={A:'Pode receber a Sagração do Rei: fica 3/3 e perde 1/1 por turno.','2':'Passa por cima de cartas. A partir do 2º turno, entra também no meio. Ataca monarca só na base inimiga. Sem revide fora da sua base.','3':'Guarda: os inimigos vizinhos atacam o Escudeiro primeiro.','4':'Também ataca a 2 casas em linha reta, se a casa do meio estiver livre. Na sua base, só corpo a corpo.','5':'Anda 2 casas. Ataca no turno em que entra.','6':'Ao entrar, cura 3 de uma carta sua.','7':'Ao entrar, compra 1 carta.','8':'Não ataca. Quem a ataca leva 1 (espinhos). O inimigo que chega ao lado para ali.','9':'As cartas suas vizinhas causam +1 de dano.','10':'Carta forte e resistente.','J':'Quando derruba uma carta, ataca de novo.',K:'Rei. Poderes: Ordem (+1 de Força numa carta, 2 moedas) e Sagração do Ás (2 moedas).',Q:'Rainha. Poder: Decreto (cura 2 numa carta ou compra 1, 2 moedas).'};
 const SW='<svg width="10" height="10" viewBox="0 0 16 16" aria-hidden="true" style="color:#f2cf7a"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M13.5 2.5 6 10M4 8l4 4M3 13l2-2"/></svg>';
 let maoAntes=[],G,sel=null,msg='',fresh=new Set(),hit=new Set(),busy=false,seen=0,endFx=false,K=1;
 const $=s=>document.querySelector(s);
-const pos=k=>{const [c,Y]=k.split(',').map(Number);return {x:c*SX,y:Y/2*SY};};
+// lado 1 vê o campo girado 180°: cada jogador se vê embaixo (o campo é simétrico: colunas 0–4, linhas 0–12)
+const pos=k=>{let [c,Y]=k.split(',').map(Number);if(ME){c=4-c;Y=12-Y;}return {x:c*SX,y:Y/2*SY};};
 const nome=r=>CARDS[r].name;
 
 // Som: amostras em som/*.mp3 (trilha medieval e efeitos); sem o arquivo, cai no som sintetizado.
@@ -270,7 +289,7 @@ function fxScan(){
     else if(l.t==='move')want('move',1);
     else if(l.t==='atk'){want('attack',2);const u=G.sides[1-l.p].u[l.target];if(u)hit.add(u.pos);if(l.p===IA&&isMon(l.target))shake(true);}
     else if(l.t==='fatigue'){want('fatigue',3);if(l.p===ME)shake(false);}
-    else if(l.t==='down'){const m=isMon(l.r);want(m?'monarchFall':'fall',m?6:3);sparks(old(l.p,l.r),l.p?'#9fb4ff':'#ff8a6a',m?30:14);}
+    else if(l.t==='down'){const m=isMon(l.r);want(m?'monarchFall':'fall',m?6:3);sparks(old(l.p,l.r),l.p===IA?'#9fb4ff':'#ff8a6a',m?30:14);}
     else if(l.t==='turn'&&l.p===ME)want('yourTurn',.5);
   }
   if(evs.some(l=>l.t==='atk'&&isMon(l.target))&&pr<6)snd='monarchHit';
@@ -295,7 +314,8 @@ const FALAS={
 const last={};
 function pick(k){const a=FALAS[k];let i;do i=Math.floor(Math.random()*a.length);while(a.length>1&&i===last[k]);last[k]=i;return a[i];}
 let say={txt:'',until:0},sayT=null;
-function speak(txt,ms=5200){say={txt,until:Date.now()+ms};const b=$('.say');if(b){b.lastChild.textContent=txt;b.classList.remove('hide');}
+function speak(txt,ms=5200){if(net)return; // no 1×1 o rival é uma pessoa: sem falas
+  say={txt,until:Date.now()+ms};const b=$('.say');if(b){b.lastChild.textContent=txt;b.classList.remove('hide');}
   clearTimeout(sayT);sayT=setTimeout(()=>$('.say')?.classList.add('hide'),ms);}
 // reage ao registro: só a reação mais importante, e nem sempre
 function falas(evs){let best=null,pr=-1;const set=(k,n,c)=>{if(n>pr){pr=n;best=[k,c];}};
@@ -322,7 +342,7 @@ setInterval(()=>{
 },250);
 // o marcador de turno vai antes do que acontece no início do turno novo (cerco, fadiga)
 function virar(){const k=G.log.length;endTurn(G);G.log.splice(k,0,{t:'turn',p:G.turn,n:G.turnNo+1});left=tl;idleAt=0;return k+1;}
-function encerrar(){if(dicas&&G.turn===ME){dicas=false;keep('dicas','1');}sel=null;const n=virar();msg=resumo(n,'Início do turno da IA');render();if(G.winner==null)vezIA();}
+function encerrar(){if(dicas&&G.turn===ME){dicas=false;keep('dicas','1');}sel=null;const n=virar();msg=resumo(n,`Início do turno ${daR()}`);render();if(G.winner==null&&!net)vezIA();}
 // Oponente Claude ao vivo: ele escolhe a carta jogada e comenta; mover, atacar e poderes ficam com a IA do motor.
 // ponytail: Claude decide só a jogada; planejar movimentos e ataques por ele pede várias chamadas por turno.
 let sample=null,opp='local',claudeSaid=0;
@@ -374,7 +394,89 @@ function dicaPasso(){if(!dicas||tut!=null||ov||sel||busy||G.turn!==ME||G.winner!
 function dicaPor(){const d=dicaPasso(),el=d&&$(d[0]);if(!el)return;const a=$('#app').getBoundingClientRect(),r=el.getBoundingClientRect(),y=(r.top-a.top)/K,b=(r.bottom-a.top)/K,cx=(r.left+r.width/2-a.left)/K;
   const t=document.createElement('div');t.className='dica';t.setAttribute('role','status');t.innerHTML=`<small>PRIMEIRO TURNO</small><b>${d[1]}</b><span>${d[2]}</span><button id="semdicas">Pular dicas</button>`;$('#app').appendChild(t);
   const h=t.offsetHeight,up=y-h-14>0;t.classList.add(up?'up':'down');t.style.top=(up?y-h-14:b+14)+'px';t.style.setProperty('--ax',Math.max(14,Math.min(296,cx-40))+'px');}
-function novo(){busy=false;maoAntes=[];G=newGame(Math.random,Math.random()<.5?ME:IA);ov=null;tl=+(pref('tempo')??45);opp=sample&&pref('oponente')!=='local'?'claude':'local';left=tl;idleAt=0;speak(pick('start'),7000);sel=null;fresh=new Set();hit=new Set();seen=G.log.length;endFx=false;msg=G.turn===ME?'Você começa. No 1º turno, quem começa não joga carta.':'A IA começa.';render();if(G.turn===IA&&tut==null)vezIA();}
+
+// ===== 1×1 online (Supabase Realtime) =====
+// Um canal por partida, sem tabelas. Quem está na vez aplica a jogada e envia o estado inteiro (seq sobe);
+// o outro só recebe e vê ao vivo. Presença avisa quando o rival cai e volta.
+// ponytail: ninguém valida as jogadas no servidor; serve para jogar entre amigos.
+const SB_URL='https://xsoencafqztupnnjilvw.supabase.co',SB_KEY='sb_publishable_mWA2gN9mMK7HLnnUTsdb0A_ZAHib6kd';
+let net=null,sb=null,netErr='',codigo='';
+const R=()=>net?net.rv:'IA',daR=()=>net?'de '+net.rv:'da IA';
+const LETRAS='ABCDEFGHJKLMNPQRSTUVWXYZ',novoCodigo=()=>Array.from({length:4},()=>LETRAS[Math.floor(Math.random()*24)]).join('');
+const linkDe=c=>'https://clleytonbraga.github.io/corte52/#'+c; // o link sempre leva ao site, também quando o código sai do app
+function sbLoad(){return window.supabase?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';s.onload=ok;s.onerror=()=>no(new Error('rede'));document.head.appendChild(s);});}
+async function conectar(code,host,salvo){
+  try{await sbLoad();sb=sb||window.supabase.createClient(SB_URL,SB_KEY);}catch(e){netErr='Sem conexão. O 1×1 online precisa de internet (no claude.ai ele não funciona: jogue em clleytonbraga.github.io/corte52).';render();return;}
+  if(net)netSair();
+  const id=Math.random().toString(36).slice(2,10),ch=sb.channel('c52:'+code,{config:{broadcast:{self:false},presence:{key:id}}});
+  net={code,ch,id,host,rv:'Rival',seq:0,last:'',on:false,lostAt:0,started:false,rev:{eu:false,ele:false}};
+  ME=host?0:1;IA=1-ME;busy=false;sel=null;tut=null;
+  if(!salvo&&host)ov='net'; // a tela de espera para o relógio da partida de fundo
+  if(salvo){G=salvo.G;net.seq=salvo.seq;net.last=JSON.stringify(G);net.started=true;tl=45;left=45;seen=G.log.length;maoAntes=[...G.sides[ME].hand];ov=null;}
+  ch.on('broadcast',{event:'g'},({payload})=>receber(payload));
+  ch.on('broadcast',{event:'rev'},()=>{net.rev.ele=true;revanche();render();});
+  ch.on('presence',{event:'sync'},presenca);
+  ch.subscribe(async st=>{if(st==='SUBSCRIBED')await ch.track({nome:pref('nome')||(host?'Anfitrião':'Convidado')});
+    else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){netErr='Não deu para conectar. Confira a internet e tente de novo.';render();}});
+  keep('net',JSON.stringify({code,host}));try{history.replaceState(null,'','#'+code);}catch(e){}
+  render();}
+function presenca(){if(!net)return;const outros=Object.entries(net.ch.presenceState()).filter(([k])=>k!==net.id).map(([,v])=>v[0]||{});
+  if(outros.length>1&&!net.started){netErr='Essa partida já tem dois jogadores.';netSair();render();return;}
+  const r=outros[0],era=net.on;net.on=!!r;if(r)net.rv=(r.nome||'Rival').slice(0,16);
+  if(r&&!era){net.lostAt=0;if(net.started)enviar(true);else if(net.host)iniciar();}
+  if(!r&&era&&net.started&&G.winner==null)net.lostAt=Date.now();
+  render();}
+function iniciar(){maoAntes=[];G=newGame(Math.random,Math.random()<.5?0:1);net.seq++;net.started=true;net.rev={eu:false,ele:false};
+  tl=45;left=45;idleAt=0;sel=null;fresh=new Set();hit=new Set();seen=G.log.length;endFx=false;ov=null;
+  msg=G.turn===ME?'Você começa. No 1º turno, quem começa não joga carta.':`${R()} começa.`;enviar(true,true);render();}
+function enviar(forca,novo){if(!net||!net.started)return;const s=JSON.stringify(G);if(!forca&&s===net.last)return;
+  if(!forca)net.seq++;net.last=s;keep('net',JSON.stringify({code:net.code,host:net.host,seq:net.seq,G}));
+  net.ch.send({type:'broadcast',event:'g',payload:{seq:net.seq,G,novo:!!novo}});}
+function receber(m){if(!net||!m||!m.G)return;if(net.started&&!m.novo&&m.seq<=net.seq)return;
+  const antes=G&&net.started?G.turn:null;net.seq=m.seq;
+  if(m.novo||!net.started){net.started=true;net.rev={eu:false,ele:false};maoAntes=[];fresh=new Set();hit=new Set();endFx=false;seen=m.G.log.length;ov=null;tl=45;
+    msg=m.G.turn===ME?'Você começa. No 1º turno, quem começa não joga carta.':`${R()} começa.`;}
+  G=m.G;net.last=JSON.stringify(G);keep('net',JSON.stringify({code:net.code,host:net.host,seq:net.seq,G}));
+  if(G.turn===ME&&antes!==ME){left=tl;idleAt=0;sel=null;msg=resumo(Math.max(0,G.log.findLastIndex(l=>l.t==='turn'&&l.p===IA)),R())||'Sua vez.';}
+  render();}
+function revanche(){if(net.rev.eu&&net.rev.ele&&net.host)iniciar();}
+function netSair(){if(!net)return;try{net.ch.unsubscribe();}catch(e){}net=null;ME=0;IA=1;keep('net',null);
+  try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}}
+// partida online em andamento (recarregou a página) ou link com código: entra direto
+function netRetomar(){const h=location.hash.slice(1).toUpperCase();let d=null;try{d=JSON.parse(pref('net'));}catch(e){}
+  if(d&&d.G&&(!h||h===d.code)&&d.G.winner==null){G=d.G;conectar(d.code,d.host,d);return true;}
+  if(/^[A-Z]{4}$/.test(h)){keep('net',null);tut=null;codigo=h;novo();ov='entrar';render();conectarEntrar(h);return true;}
+  return false;}
+function conectarEntrar(c){netErr='';ov='entrar';codigo=c;conectar(c,false);}
+// rival fora por 1 minuto: a vitória é de quem ficou
+setInterval(()=>{if(!net||!net.started||!net.lostAt||G.winner!=null)return;const f=60-Math.floor((Date.now()-net.lostAt)/1000);
+  if(f<=0){G.winner=ME;G.ab=1;net.lostAt=0;render();return;}const e=$('#caiut');if(e)e.textContent='0:'+String(f).padStart(2,'0');},1000);
+const radar='<div class="radar" aria-hidden="true">'+[[190,.05],[140,.08],[92,.12]].map(([s,o])=>`<i style="--s:${s}px;--o:${o}"></i>`).join('')+'</div>';
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function netHTML(){const er=netErr?`<small class="err" role="alert">${esc(netErr)}</small>`:'';
+  const nome=`<label for="nome">Seu nome<input id="nome" maxlength="16" autocomplete="nickname" value="${esc(pref('nome')||'')}" placeholder="Como o rival vê você"></label>`;
+  if(ov==='modo')return `<div class="fim" role="dialog" aria-label="Nova partida"><div class="pn"><h2>Nova partida</h2><span>Contra quem você quer jogar?</span>${nome}
+    <button class="btn alt" id="vsia">Contra a IA<em>Sozinho, neste aparelho.</em></button><button class="btn" id="criar">Criar partida 1×1<em>Você recebe um código para mandar ao rival.</em></button>
+    <button class="btn alt" id="entrar">Entrar numa partida 1×1<em>Digite o código que o rival mandou.</em></button>${er}<small>1×1 online: celular ou computador, em qualquer lugar. Precisa de internet.</small><button class="btn alt c" data-x>Voltar</button></div></div>`;
+  if(net&&!net.started&&net.host)return `<div class="fim" role="dialog" aria-label="Esperando o rival"><div class="pn"><h2>Esperando o rival</h2><div class="cod" aria-label="Código ${net.code.split('').join(' ')}">${radar.replace('class="radar"','class="radar" style="position:absolute;inset:-28px 0 0"')}${net.code.split('').map(c=>`<b>${c}</b>`).join('')}</div>
+    <span>Mande o código ou o link para o rival. Ele toca em <b>Entrar numa partida 1×1</b>.</span><div class="link">${esc(linkDe(net.code))}</div><button class="btn c" id="copiar">Copiar link</button>${er}<button class="btn alt c" id="cancelar">Cancelar</button></div></div>`;
+  if(ov==='entrar'||net&&!net.started)return `<div class="fim" role="dialog" aria-label="Entrar numa partida"><div class="pn"><h2>Entrar numa partida</h2>${net?`${radar}<span>Procurando a partida <b>${net.code}</b>…</span><small>Se demorar, confira se quem criou ainda está na tela do código.</small>`:`${nome}<label for="cod">Código da partida<input id="cod" class="code" maxlength="4" autocomplete="off" autocapitalize="characters" value="${esc(codigo)}" placeholder="ABCD"></label><button class="btn c" id="ir">Entrar</button>`}${er}<button class="btn alt c" id="cancelar">Cancelar</button></div></div>`;
+  if(net&&net.started&&!net.on&&net.lostAt&&G.winner==null)return `<div class="fim" role="dialog" aria-label="Rival desconectado"><div class="pn"><h2>Rival desconectado</h2><div class="relogio" id="caiut">1:00</div><span>Esperando <b>${esc(R())}</b> voltar. A partida continua de onde parou.</span><small>Se ele não voltar em 1 minuto, a vitória é sua.</small><button class="btn alt c" id="sair1">Encerrar a partida</button></div></div>`;
+  return '';}
+function netClick(e){const t=e.target;
+  if(t.closest('#vsia')){netErr='';if(net)netSair();if(G.winner==null&&G.turnNo>0&&!net){ov='novo';render();}else novo();return true;}
+  if(t.closest('#criar')){netErr='';ov=null;conectar(novoCodigo(),true);return true;}
+  if(t.closest('#entrar')){netErr='';ov='entrar';render();return true;}
+  if(t.closest('#ir')){const c=($('#cod')?.value||'').toUpperCase().replace(/[^A-Z]/g,'');if(c.length!==4){netErr='O código tem 4 letras.';render();return true;}conectarEntrar(c);return true;}
+  if(t.closest('#cancelar')){netSair();netErr='';ov=null;if(!G||G.winner!=null)novo();else render();return true;}
+  if(t.closest('#copiar')){const l=linkDe(net.code),b=t.closest('#copiar');(navigator.share?navigator.share({title:'Corte 52',text:`Bora um 1×1 de Corte 52? Código ${net.code}`,url:l}):navigator.clipboard.writeText(l)).then(()=>{b.textContent='Pronto!';},()=>{});return true;}
+  if(t.closest('#rev')){net.rev.eu=true;net.ch.send({type:'broadcast',event:'rev',payload:{}});revanche();render();return true;}
+  if(t.closest('#sair1')){if(net&&net.started&&G.winner==null){G.winner=IA;G.ab=1;enviar();}netSair();novo();return true;}
+  return false;}
+document.addEventListener('change',e=>{if(e.target.id==='nome')keep('nome',e.target.value.trim().slice(0,16)||null);});
+
+function novo(){if(net)netSair();busy=false;maoAntes=[];G=newGame(Math.random,Math.random()<.5?ME:IA);ov=null;tl=+(pref('tempo')??45);opp=sample&&pref('oponente')!=='local'?'claude':'local';left=tl;idleAt=0;speak(pick('start'),7000);sel=null;fresh=new Set();hit=new Set();seen=G.log.length;endFx=false;msg=G.turn===ME?'Você começa. No 1º turno, quem começa não joga carta.':'A IA começa.';render();if(G.turn===IA&&tut==null)vezIA();}
 
 function cartaHex(p,r,cls,dmg){const S=G.sides[p],u=S.u[r],v=rem(S,r),mon=isMon(r);
   const tag=mon?`<span class="mon" style="${p===IA?'top:-7px;background:#34478a':'bottom:-7px;background:#8e1d30'}">${r==='K'?'REI':'RAINHA'}</span>`:'';
@@ -387,7 +489,7 @@ function alvos(){ // casas destacadas para a seleção atual: {k: 'mover'|'alvo'
   if(sel.t==='ordem')units(G.sides[ME]).filter(r=>canOrder(G,ME,r)).forEach(r=>m[G.sides[ME].u[r].pos]='ordem');
   return m;}
 
-const moedas=(n,eu)=>`<div class="coin ${eu?'eu':''}" role="img" aria-label="${eu?'Suas moedas':'Moedas da IA'}: ${n} de ${RULES.coinsCap}"><b>${n}</b><span class="pips" aria-hidden="true">${Array.from({length:RULES.coinsCap},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</span>${eu?'<span class="lbl">MOEDAS</span>':''}</div>`;
+const moedas=(n,eu)=>`<div class="coin ${eu?'eu':''}" role="img" aria-label="${eu?'Suas moedas':'Moedas '+daR()}: ${n} de ${RULES.coinsCap}"><b>${n}</b><span class="pips" aria-hidden="true">${Array.from({length:RULES.coinsCap},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</span>${eu?'<span class="lbl">MOEDAS</span>':''}</div>`;
 function render(){fxScan();SND.scene(G.winner!=null?'fim':'batalha',tense());const A=alvos(),S=G.sides[ME],E=G.sides[IA],minha=G.turn===ME&&G.winner==null;
   let cells='';
   for(const k of CELLS){const {x,y}=pos(k),o=G.at[k],a=A[k],z=zone(k,ME);
@@ -395,7 +497,7 @@ function render(){fxScan();SND.scene(G.winner!=null?'fim':'batalha',tense());con
     if(o){const u=G.sides[o.p].u[o.r],me=o.p===ME&&!isMon(o.r);
       let cls=(u.sick&&me?'sick ':'')+(me&&minha&&(canAttack(G,ME,o.r)||moveTargets(G,ME,o.r).length)?'ready ':'')+(sel&&sel.t==='un'&&sel.r===o.r&&o.p===ME?'sel ':'')+(a==='alvo'||a==='ordem'?'alvo ':'')+(fresh.has(k)?(o.p===IA?'fly ia ':'fly '):'')+(hit.has(k)?'hit ':'');
       const dm=a==='alvo'?prev(k):a==='ordem'?'+1':'';
-      cells+=`<button class="cell ${cls}" style="${st}" data-k="${k}" data-u="${o.p}${o.r}" data-dmg="${dm}" aria-label="${nome(o.r)} ${o.p===IA?'da IA':'seu'}, vida ${rem(G.sides[o.p],o.r)}">${cartaHex(o.p,o.r)}</button>`;}
+      cells+=`<button class="cell ${cls}" style="${st}" data-k="${k}" data-u="${o.p}${o.r}" data-dmg="${dm}" aria-label="${nome(o.r)} ${o.p===IA?daR():'seu'}, vida ${rem(G.sides[o.p],o.r)}">${cartaHex(o.p,o.r)}</button>`;}
     else{const fill=a==='jogar'||a==='mover'?'rgba(120,208,138,.25)':z==='mid'?'rgba(246,224,160,.07)':'rgba(0,0,0,.28)';
       const stroke=a?'#78d08a':z==='home'?'rgba(255,160,175,.22)':z==='enemy'?'rgba(169,184,255,.22)':'rgba(246,224,160,.28)';
       cells+=`<button class="cell" style="${st}" data-k="${k}" aria-label="Casa vazia${a?', '+a:''}" ${a?'':'tabindex="-1"'}><svg viewBox="0 0 100 86.6" preserveAspectRatio="none" aria-hidden="true"><polygon points="26,2 74,2 98,43.3 74,84.6 26,84.6 2,43.3" style="fill:${fill};stroke:${stroke};stroke-width:${a?2:1.2};stroke-dasharray:${a?0:'4 6'};vector-effect:non-scaling-stroke"/></svg></button>`;}}
@@ -407,22 +509,22 @@ function render(){fxScan();SND.scene(G.winner!=null?'fim':'batalha',tense());con
   $('#app').innerHTML=`
   <header><button class="ic" id="menu" aria-label="Menu" aria-expanded="${ov==='menu'}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="#e6c06a" stroke-width="2.2" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg></button><h1>Corte 52</h1><button class="ic" id="som" aria-label="${SND.vol()||SND.musicVol()?'Desligar o som':'Ligar o som'}" aria-pressed="${!(SND.vol()||SND.musicVol())}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e6c06a" d="M4 9h4l5-4v14l-5-4H4z"/><path fill="none" stroke="#e6c06a" stroke-width="2" stroke-linecap="round" d="${SND.vol()||SND.musicVol()?'M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11':'M16 9l5 6M21 9l-5 6'}"/></svg></button></header>
   <section class="mesa" aria-label="Mesa" style="--a:${Math.round(54+2.25*SY+H/2+15)}px;--b:${Math.round(54+3.75*SY+H/2-15)}px"><div class="bg-c"></div><div class="bg-v"></div>
-   <div class="topo">${moedas(E.coins,false)}<div class="maoia" role="img" aria-label="Mão da IA: ${E.hand.length} cartas">${maoIA}</div><div class="deck" role="img" aria-label="Baralho da IA: ${E.deck.length}"><span class="c back-c"></span><i>${E.deck.length}</i><span class="lbl">BARALHO</span></div></div>
+   <div class="topo">${moedas(E.coins,false)}<div class="maoia" role="img" aria-label="Mão ${daR()}: ${E.hand.length} cartas">${maoIA}</div><div class="deck" role="img" aria-label="Baralho ${daR()}: ${E.deck.length}"><span class="c back-c"></span><i>${E.deck.length}</i><span class="lbl">BARALHO</span></div></div>
    <div class="say ${Date.now()<say.until?'':'hide'}" role="status" aria-label="Fala da IA"><b>${E.u.K?'REI':'RAINHA'}</b>${say.txt}</div>
    <div class="campo" style="width:${larg}px;height:${alt}px">${cells}</div></section>
   <div class="guia" aria-live="polite">${guia(minha)}</div>
   <div class="base">${moedas(S.coins,true)}
    <div class="mao" aria-label="Sua mão">${mao}</div>
    <button class="deck ${minha&&canDraw(G,ME)?'on':''}" id="comprar" aria-label="Comprar carta (${S.deck.length} no baralho)"><span class="c back-v"></span><i>${S.deck.length}</i><span class="lbl">${minha&&canDraw(G,ME)?(G.draws?'2 MOEDAS':'COMPRAR'):'BARALHO'}</span></button></div>
-  ${G.winner!=null?`<div class="fim ${G.winner===IA?'lose':''}" role="dialog" aria-label="Fim de jogo"><div><h2>${G.winner===ME?'Vitória!':G.winner===IA?'Derrota':'Empate'}</h2><span>${G.winner===ME?'O Rei e a Rainha da IA caíram.':G.winner===IA?'Seu Rei e sua Rainha caíram.':'Limite de turnos.'}</span><button class="btn" id="denovo">Nova partida</button></div></div>`:''}
-  ${tut!=null?tutHTML():''}${ov==='menu'?menuHTML():ov==='log'?logHTML():ov==='novo'?`<div class="fim" role="dialog" aria-label="Nova partida"><div><h2>Nova partida?</h2><span>A partida atual será abandonada.</span><button class="btn" id="denovo">Nova partida</button><button class="btn alt" data-x>Continuar esta</button></div></div>`:''}`;
+  ${G.winner!=null?`<div class="fim ${G.winner===IA?'lose':''}" role="dialog" aria-label="Fim de jogo"><div><h2>${G.winner===ME?'Vitória!':G.winner===IA?'Derrota':'Empate'}</h2><span>${G.ab?(G.winner===ME?`${R()} saiu da partida.`:'Você saiu da partida.'):G.winner===ME?`O Rei e a Rainha ${daR()} caíram.`:G.winner===IA?'Seu Rei e sua Rainha caíram.':'Limite de turnos.'}</span>${net?`<button class="btn" id="rev" ${net.rev.eu?'disabled':''}>${net.rev.eu?`Esperando ${R()}…`:'Revanche'}</button><button class="btn alt" id="sair1">Sair do 1×1</button><small style="color:#9d90a8">${net.rev.ele&&!net.rev.eu?`${R()} quer revanche.`:'A revanche começa quando os dois tocarem em Revanche.'}</small>`:'<button class="btn" id="denovo">Nova partida</button>'}</div></div>`:''}
+  ${tut!=null?tutHTML():''}${netHTML()}${ov==='menu'?menuHTML():ov==='log'?logHTML():ov==='novo'?`<div class="fim" role="dialog" aria-label="Nova partida"><div><h2>Nova partida?</h2><span>A partida atual será abandonada.</span><button class="btn" id="denovo">Nova partida</button><button class="btn alt" data-x>Continuar esta</button></div></div>`:''}`;
   fresh=new Set();hit=new Set();dicaPor();
   // cartas novas na sua mão voam do baralho (compra, Decreto, Mensageiro, mão inicial)
   const d=$('#comprar').getBoundingClientRect();
   S.hand.filter(r=>!maoAntes.includes(r)).forEach((r,i)=>{const el=$(`[data-h="${r}"]`),c=el.getBoundingClientRect();
     el.style.setProperty('--dx',(d.left+d.width/2-c.left-c.width/2)/K+'px');el.style.setProperty('--dy',(d.top+d.height/2-c.top-c.height/2)/K+'px');el.style.animationDelay=i*.12+'s';el.classList.add('novo');});
   maoAntes=[...S.hand];
-  keep('aberto',G.winner==null?JSON.stringify({G,tl,left,opp}):null);} // partida salva: recarregar a página continua daqui
+  if(net)enviar();else keep('aberto',G.winner==null?JSON.stringify({G,tl,left,opp}):null);} // partida salva: recarregar a página continua daqui
 
 function menuHTML(){const o=v=>`<option value="${v}"${+(pref('tempo')??45)===v?' selected':''}>${v?v+' s':'Sem limite'}</option>`;
   return `<div class="ov" data-x></div><nav class="drawer" aria-label="Menu do jogo"><div class="hd">Menu<button class="ic" data-x aria-label="Fechar menu">✕</button></div>
@@ -431,19 +533,19 @@ function menuHTML(){const o=v=>`<option value="${v}"${+(pref('tempo')??45)===v?'
   <label class="snd"><span>Efeitos</span><input type="range" id="vol" min="0" max="1" step="0.05" value="${SND.vol()}"></label>
   <label class="snd"><span>Música</span><input type="range" id="mus" min="0" max="1" step="0.05" value="${SND.musicVol()}"></label>
   <button class="btn alt" id="ajuda">Como jogar</button><button class="btn alt" id="reg">Registro de combate</button><button class="btn" id="nova">Nova partida</button></nav>`;}
-function itemHTML(l){const q=(p,r)=>`${nome(r)}${p===IA?' da IA':''}`,f={play:()=>`Jogou ${nome(l.r)}.`,move:()=>`${nome(l.r)} andou.`,
+function itemHTML(l){const q=(p,r)=>`${nome(r)}${p===IA?' '+daR():''}`,f={play:()=>`Jogou ${nome(l.r)}.`,move:()=>`${nome(l.r)} andou.`,
     atk:()=>l.siege?`Cerco: ${nome(l.r)} tirou ${l.n} de ${q(1-l.p,l.target)}.`:`${nome(l.r)} atacou ${q(1-l.p,l.target)}: ${l.n} de dano.`,
     down:()=>`${q(l.p,l.r)} caiu.`,fatigue:()=>`Fadiga: ${nome(l.r)} perdeu 1.`,timeout:()=>'O tempo acabou.',sacre:()=>'Sagração: o Ás ficou 3/3.',
     order:()=>`Ordem: ${nome(l.r)} +1 de Força.`,decree:()=>l.draw?'Decreto: comprou 1 carta.':`Decreto: ${nome(l.r)} curou 2.`}[l.t];
   return f&&`<li${l.t==='down'?' class="b"':''}>${f()}</li>`;}
 function logHTML(){const gs=[];let cur={p:G.first,n:1,it:[]};
   for(const l of G.log){if(l.t==='turn'){gs.push(cur);cur={p:l.p,n:l.n,it:[]};}else{const t=itemHTML(l);if(t)cur.it.push(t);}}gs.push(cur);
-  const h=gs.filter(g=>g.it.length).reverse().map(g=>`<div class="tg"><div class="th"><span class="who ${g.p?'c':'y'}">${g.p?'IA':'Você'}</span><span class="tn">Turno ${g.n}</span></div><ul>${g.it.reverse().join('')}</ul></div>`).join('');
+  const h=gs.filter(g=>g.it.length).reverse().map(g=>`<div class="tg"><div class="th"><span class="who ${g.p===IA?'c':'y'}">${g.p===IA?R():'Você'}</span><span class="tn">Turno ${g.n}</span></div><ul>${g.it.reverse().join('')}</ul></div>`).join('');
   return `<div class="ov" data-x></div><section class="sheet" role="dialog" aria-label="Registro de combate"><div class="hd">Registro<button class="ic" data-x aria-label="Fechar">✕</button></div><div class="log">${h||'<small>Nada aconteceu ainda.</small>'}</div></section>`;}
 
 function guia(minha){
   const fim=(on,pulse)=>`<button class="btn ${pulse?'pulse':''}" id="fim" ${on?'':'disabled'}>Encerrar</button>`;
-  if(!minha)return `<div class="gr"><div class="col"><div class="tri"><b class="agora"><i></i>${G.winner!=null?'Fim de jogo':'Vez da IA…'}</b></div><div class="lin">${msg}</div></div>${fim(false)}</div>`;
+  if(!minha)return `<div class="gr"><div class="col"><div class="tri"><b class="agora"><i></i>${G.winner!=null?'Fim de jogo':`Vez ${daR()}…`}</b>${net?`<span></span><span class="rival ${net.on?'':'off'}"><i></i>${net.on?'conectado':'desconectado'}</span>`:''}</div><div class="lin">${msg}</div></div>${fim(false)}</div>`;
   const S=G.sides[ME];let lin='',bt='';
   if(sel&&(sel.t==='un'||sel.t==='mao'||sel.t==='mon'))lin=`<b>${nome(sel.r)}</b> · ${TXT[sel.r]}`;
   if(sel&&sel.t==='mon'){
@@ -480,7 +582,8 @@ document.addEventListener('click',e=>{
   if(e.target.closest('#tpular')){tut=null;keep('tutorial','1');render();if(G.turn===IA&&!busy&&G.winner==null)vezIA();return;}
   if(e.target.closest('#semdicas')){dicas=false;keep('dicas','1');render();return;}
   if(tut!=null)return;
-  if(e.target.closest('#nova')){if(G.winner==null&&G.turnNo>0){ov='novo';render();}else novo();return;}
+  if(e.target.closest('#nova')){ov='modo';netErr='';render();return;}
+  if(netClick(e))return;
   if(e.target.closest('#denovo')){novo();return;}
   if(ov)return;
   if(busy||G.winner!=null||G.turn!==ME)return;
@@ -501,7 +604,7 @@ document.addEventListener('click',e=>{
   if(A[k]==='alvo'){const n=G.log.length,r=sel.r;buzz();attack(G,ME,r,k);msg=resumo(n,'Você');if(!S.u[r]||!canAttack(G,ME,r))sel=S.u[r]&&moveTargets(G,ME,r).length?sel:null;render();return;}
   if(A[k]==='ordem'){order(G,ME,o.r);G.log.push({t:'order',p:ME,r:o.r});SND.play('select');msg=`Ordem: ${nome(o.r)} ganhou +1 de Força neste turno.`;sel={t:'un',r:o.r};render();return;}
   if(o&&o.p===ME){sel=isMon(o.r)?{t:'mon',r:o.r}:(sel&&sel.t==='un'&&sel.r===o.r?null:{t:'un',r:o.r});if(sel)SND.play('select');msg='';render();return;}
-  if(o&&o.p===IA){msg=`${nome(o.r)} da IA · ${TXT[o.r]}`;sel=null;render();return;}
+  if(o&&o.p===IA){msg=`${nome(o.r)} ${daR()} · ${TXT[o.r]}`;sel=null;render();return;}
   sel=null;render();});
 // ponytail: a tela é 390×844 fixa e só encolhe; layout próprio para telas maiores fica para depois
 // tela mais estreita que 390: a caixa sai da margem automática e fica à esquerda; o translate traz o centro de volta
@@ -510,12 +613,12 @@ const fit=()=>{K=Math.min(1,innerWidth/390,innerHeight/844);const dx=Math.min(0,
 let pt=null,consumed=false,drag=null;
 const cardAt=el=>el.dataset.h?{p:ME,r:el.dataset.h}:G.at[el.dataset.k]||null;
 function peek(d){const P=$('#peek');if(!d){P.hidden=true;return;}const S=G.sides[d.p],u=S.u[d.r],c=CARDS[d.r];
-  P.innerHTML=`<div class="pk" role="tooltip" aria-label="Prévia: ${nome(d.r)}${d.p===IA?' da IA':''}">${completa(d.p,d.r)}</div>`;P.hidden=false;}
+  P.innerHTML=`<div class="pk" role="tooltip" aria-label="Prévia: ${nome(d.r)}${d.p===IA?' '+daR():''}">${completa(d.p,d.r)}</div>`;P.hidden=false;}
 // carta no modo completo (prancheta "Cartas · vitrine do layout"): você ♥ vermelho, IA ♠ azul
 const META={A:['Leve · Unidade','Sagração'],'2':['Leve · Unidade','Infiltração'],'3':['Leve · Unidade','Guarda'],'4':['Leve · Unidade','Rajada'],'5':['Média · Unidade','Investida'],'6':['Média · Unidade','Bênção'],'7':['Média · Unidade','Despacho'],'8':['Pesada · Defesa','Espinhos'],'9':['Pesada · Unidade','Comando'],'10':['Pesada · Unidade','Força bruta'],J:['Pesada · Unidade','Duelista'],Q:['Monarca','Decreto'],K:['Monarca','Ordem e Sagração']};
 const PAL=[['linear-gradient(160deg,#8e1d30,#4e0d18 55%,#7a1828)','#6e1424','#c8364d','#a3172e'],['linear-gradient(160deg,#24346e,#0c1430 55%,#1f2c5c)','#141f45','#34478a','#141a2e']];
 const SWD='<svg viewBox="0 0 16 16" aria-hidden="true" style="color:#d9b45a"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M13.5 2.5 6 10M4 8l4 4M3 13l2-2M2.5 2.5 10 10M12 8l-4 4M13 13l-2-2"/></svg>',HRT='<svg viewBox="0 0 16 16" aria-hidden="true" style="color:#e2566c;fill:currentColor"><path d="M8 14.5 1.8 8.4A3.6 3.6 0 0 1 8 3.6a3.6 3.6 0 0 1 6.2 4.8z"/></svg>';
-function completa(p,r){const S=G.sides[p],u=S.u[r],c=CARDS[r],F=u?forceOf(S,r):c.f,MX=u?vmax(S,r):c.v,v=u?rem(S,r):MX,[fr,dp,lt,ink]=PAL[p];
+function completa(p,r){const S=G.sides[p],u=S.u[r],c=CARDS[r],F=u?forceOf(S,r):c.f,MX=u?vmax(S,r):c.v,v=u?rem(S,r):MX,[fr,dp,lt,ink]=PAL[p===ME?0:1];
   return `<div class="ci" style="--frame:${fr};--deep:${dp};--light:${lt};--sink:${ink}"><div class="cc"><div class="top"><div class="suit">${p===ME?'♥':'♠'}</div><div class="names"><div class="nm">${c.name}</div><div class="cl">${META[r][0]}</div></div><div class="med">${r}</div></div>
     <div class="art"><img src="arte/${r}.webp" alt=""></div><div class="two"><span class="${F>c.f?'up':''}" aria-label="Força ${F}">${SWD}${F}</span><span aria-label="Vida ${v} de ${MX}">${HRT}${v}</span></div><div class="parch pod"><b>${META[r][1]}</b><span>${TXT[r]}</span></div></div></div>`;}
 document.addEventListener('pointerdown',e=>{
@@ -551,7 +654,7 @@ document.addEventListener('change',e=>{if(e.target.id==='tempo'||e.target.id==='
 document.addEventListener('dragstart',e=>{if(e.target.closest('[data-h],[data-k]'))e.preventDefault();});
 document.addEventListener('contextmenu',e=>{if(e.target.closest('[data-h],[data-k]'))e.preventDefault();});
 addEventListener('resize',fit);fit();
-try{const d=JSON.parse(pref('aberto'));if(!d||!d.G.at||d.G.winner!=null)throw 0;G=d.G;maoAntes=[...G.sides[ME].hand];tl=d.tl;left=d.left;opp=d.opp||'local';seen=G.log.length;msg='Partida retomada.';render();if(G.turn===IA&&tut==null)vezIA();}catch(e){novo();}
+if(!netRetomar())try{const d=JSON.parse(pref('aberto'));if(!d||!d.G.at||d.G.winner!=null)throw 0;G=d.G;maoAntes=[...G.sides[ME].hand];tl=d.tl;left=d.left;opp=d.opp||'local';seen=G.log.length;msg='Partida retomada.';render();if(G.turn===IA&&tut==null)vezIA();}catch(e){novo();}
 </script>
 </body>
 </html>
