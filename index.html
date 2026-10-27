@@ -411,7 +411,7 @@ async function conectar(code,host,salvo){
   if(net)netSair();
   const id=Math.random().toString(36).slice(2,10),ch=sb.channel('c52:'+code,{config:{broadcast:{self:false},presence:{key:id}}});
   net={code,ch,id,host,rv:'Rival',seq:0,last:'',on:false,lostAt:0,started:false,rev:{eu:false,ele:false}};
-  ME=host?0:1;IA=1-ME;busy=false;sel=null;tut=null;
+  ME=host?0:1;IA=1-ME;busy=false;sel=null;tut=null;say={txt:'',until:0}; // apaga a fala da IA que abriu junto com a página
   if(!salvo&&host)ov='net'; // a tela de espera para o relógio da partida de fundo
   if(salvo){G=salvo.G;net.seq=salvo.seq;net.last=JSON.stringify(G);net.started=true;tl=45;left=45;seen=G.log.length;maoAntes=[...G.sides[ME].hand];ov=null;}
   ch.on('broadcast',{event:'g'},({payload})=>receber(payload));
