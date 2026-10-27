@@ -417,8 +417,9 @@ async function conectar(code,host,salvo){
   ch.on('broadcast',{event:'g'},({payload})=>receber(payload));
   ch.on('broadcast',{event:'rev'},()=>{net.rev.ele=true;revanche();render();});
   ch.on('presence',{event:'sync'},presenca);
-  ch.subscribe(async st=>{if(st==='SUBSCRIBED')await ch.track({nome:pref('nome')||(host?'Anfitrião':'Convidado')});
-    else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){netErr='Não deu para conectar. Confira a internet e tente de novo.';render();}});
+  // a biblioteca tenta de novo sozinha depois de um erro: a mensagem some quando a conexão volta
+  ch.subscribe(async(st,err)=>{if(st==='SUBSCRIBED'){if(netErr){netErr='';render();}await ch.track({nome:pref('nome')||(host?'Anfitrião':'Convidado')});}
+    else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'){console.warn('1×1:',st,err);netErr='Tentando conectar de novo… Se não passar daqui, desligue VPN ou bloqueador de anúncios e confira a internet.';render();}});
   keep('net',JSON.stringify({code,host}));try{history.replaceState(null,'','#'+code);}catch(e){}
   render();}
 function presenca(){if(!net)return;const outros=Object.entries(net.ch.presenceState()).filter(([k])=>k!==net.id).map(([,v])=>v[0]||{});
