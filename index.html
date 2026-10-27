@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Corte 52 · Campo aberto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Alegreya+Sans:wght@400;500;700;800&display=swap">
+<style>
+:root{--bg:#120c14;--ink:#f4eddc;--gold:#e6c06a;--pale:#f6e0a0;--line:rgba(207,169,79,.55);--panel:linear-gradient(180deg,#221a2a,#17111d)}
+*{box-sizing:border-box}
+html,body{overflow:hidden} /* o #app encolhe por transform; a caixa original de 844px não pode gerar rolagem */
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Alegreya Sans','Segoe UI',system-ui,sans-serif;font-size:14px;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+#app{position:relative;width:390px;height:844px;margin:0 auto;transform-origin:top center;padding:8px 12px 0;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+header{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;height:44px;flex-shrink:0}
+header h1{margin:0;font-family:'Cinzel',Georgia,serif;font-size:24px;color:var(--gold);text-align:center}
+.ic{width:40px;height:40px;display:grid;place-items:center;background:#1d1626;border:1px solid var(--line);border-radius:8px;padding:0}
+.mesa{background:linear-gradient(180deg,#1d1722,#191320);position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:4px 0 6px;flex-shrink:0}
+.bg-c,.bg-v{position:absolute;left:0;right:0;background-size:cover}
+/* fundo por zona: azul só na base da IA, vermelho só na sua base, meio neutro; --a e --b vêm do render (borda suave de 30px) */
+.bg-c{top:0;height:var(--a);-webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 30px),transparent);mask-image:linear-gradient(180deg,#000 calc(100% - 30px),transparent);background-image:linear-gradient(180deg,rgba(14,20,48,.55),rgba(14,20,48,.82)),url("arte/fundo-claude.webp")}
+.bg-v{top:var(--b);bottom:0;-webkit-mask-image:linear-gradient(0deg,#000 calc(100% - 30px),transparent);mask-image:linear-gradient(0deg,#000 calc(100% - 30px),transparent);background-image:linear-gradient(0deg,rgba(48,10,18,.55),rgba(48,10,18,.85)),url("arte/fundo-voce.webp")}
+.back-c{background:url("arte/verso-claude.webp") center/cover}
+.back-v{background:url("arte/verso-voce.webp") center/cover}
+/* coluna de 44px à esquerda: as moedas da IA ficam na mesma coluna das suas (a .mesa tem 1px de borda; a .base usa 0) */
+/* baralho da IA na mesma coluna do seu; rótulo mais justo para caber dentro da borda da mesa */
+.topo .deck{grid-column:3;z-index:1}.topo .lbl{letter-spacing:0;font-size:7.5px}.topo .deck i{right:-1px}
+.topo{position:relative;z-index:2;width:calc(100% + 2px);margin:0 -1px;display:grid;grid-template-columns:44px 1fr 44px;align-items:start;padding:2px 0 0;height:44px}
+.coin{display:flex;flex-direction:column;align-items:center;gap:3px}
+.coin b{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#fff1b8,#e6c06a 45%,#a07a26);box-shadow:0 0 0 2px #8a6a1e,inset 0 0 0 3px rgba(138,106,30,.55),0 3px 6px rgba(0,0,0,.55);font-family:'Cinzel',Georgia,serif;font-size:15px;color:#3a2508}
+.coin.eu b{width:30px;height:30px;font-size:17px}
+/* moedas como na prancheta aprovada: número na moeda e 5 pontos (cheios = moedas) */
+.pips{display:flex;gap:2px}.pips i{width:5px;height:5px;border-radius:50%;border:1px solid rgba(230,192,106,.7)}.pips i.on{background:#e6c06a;border-color:transparent}.eu .pips i{width:6px;height:6px}
+.lbl{font-family:'Cinzel',Georgia,serif;font-size:8px;letter-spacing:.12em;color:var(--pale);text-shadow:0 1px 2px #000,0 0 3px #000}
+.deck{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:0;justify-self:center;position:relative}
+.deck span.c{width:33px;height:46px;border-radius:5px;box-shadow:0 0 0 1.5px #e8c870;position:relative}
+#comprar span.c{width:40px;height:55px}
+.deck i{position:absolute;right:-5px;bottom:12px;min-width:18px;height:18px;border-radius:9px;background:#f4eddc;color:#2a1d10;font-style:normal;font-weight:800;font-size:11px;display:grid;place-items:center}
+.deck.on span.c{box-shadow:0 0 0 2px #78d08a,0 4px 8px rgba(0,0,0,.5)}
+ /* mão da IA: leque espelhado da sua, de costas, cortado pela borda de cima da mesa */
+.maoia{position:absolute;left:50%;top:-44px;translate:-50% 0;display:flex;justify-content:center}
+.maoia span{width:52px;height:73px;border-radius:5px;margin-left:-28px;box-shadow:0 0 0 1.5px rgba(207,169,79,.75),0 4px 8px rgba(0,0,0,.5);transform-origin:50% -120%}
+.maoia span:first-child{margin-left:0}
+.campo{position:relative;margin-top:6px}
+.cell{position:absolute;padding:0;border:0;background:none}
+.cell svg{position:absolute;inset:0;width:100%;height:100%}
+.hx{position:absolute;inset:0;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);background:linear-gradient(160deg,#f2cf7a,#9a7428)}
+.hx>div{position:absolute;inset:3px;clip-path:inherit;overflow:hidden;background:#6e1424}
+.hx.ia>div{background:#141f45}
+.hx img{width:100%;height:100%;object-fit:cover;object-position:50% 18%}
+.hx>div::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3),transparent 35%,transparent 50%,rgba(0,0,0,.85) 85%)}
+.st{position:absolute;left:0;right:0;bottom:7px;z-index:2;display:flex;align-items:center;justify-content:center;gap:6px;font-family:'Cinzel',Georgia,serif;font-weight:700;font-size:12px;text-shadow:0 1px 2px #000}
+.st .v.low{color:#ff8a9a}
+.rk{position:absolute;left:50%;top:4px;transform:translateX(-50%);z-index:2;font-family:'Cinzel',Georgia,serif;font-weight:700;font-size:11px;color:#f6ead0;text-shadow:0 1px 2px #000}
+.mon{position:absolute;left:50%;transform:translateX(-50%);z-index:3;color:#fff;font-weight:800;font-size:9px;border-radius:7px;padding:0 5px;letter-spacing:.05em}
+.sick .hx>div{filter:saturate(.45) brightness(.75)}
+.ready .hx{background:linear-gradient(160deg,#a8e8b4,#4f9e5e)}
+.sel .hx{background:#78d08a;filter:drop-shadow(0 0 6px rgba(120,208,138,.9))}
+.alvo .hx{background:#e0455c;filter:drop-shadow(0 0 6px rgba(224,69,92,.9))}
+.alvo::after{content:attr(data-dmg);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:4;background:#c0283f;color:#fff;font-weight:800;font-size:12px;border-radius:8px;padding:0 5px;white-space:nowrap}
+.fly{animation:fly .4s ease-out backwards}
+/* entrada sutil, vinda do lado de quem jogou: a sua sobe, a da IA desce */
+@keyframes fly{from{translate:0 var(--de,24px);opacity:0}}
+.fly.ia{--de:-24px}
+.hit{animation:hit .5s}
+@keyframes hit{20%{filter:brightness(2.2)}30%{transform:translateX(-4px)}60%{transform:translateX(4px)}}
+@media (prefers-reduced-motion:reduce){.fly,.hit{animation:none}}
+.cell,.carta{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.cell.over .hx,.cell.over svg{filter:drop-shadow(0 0 8px #fff)}
+/* tremor com translate: o #app já usa transform para a escala */
+body.shk #app{animation:shk .32s}body.shk2 #app{animation:shk2 .5s}
+@keyframes shk{20%{translate:-4px 2px}40%{translate:4px -2px}60%{translate:-3px 1px}80%{translate:2px -1px}}
+@keyframes shk2{15%{translate:-9px 4px}30%{translate:8px -4px}45%{translate:-7px 3px}60%{translate:5px -2px}80%{translate:-2px 1px}}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:9;overflow:hidden}
+#fx i{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--c);box-shadow:0 0 6px var(--c);animation:spark .8s ease-out forwards}
+@keyframes spark{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
+#fx b{position:absolute;width:10px;height:14px;border-radius:2px;background:var(--c);animation:confetti 2.6s linear forwards}
+@keyframes confetti{to{transform:translate(var(--dx),110vh) rotate(var(--rt));opacity:.9}}
+body>.ghost{position:fixed;margin:0;z-index:12;pointer-events:none;transform-origin:0 0;filter:drop-shadow(0 12px 18px rgba(0,0,0,.6));opacity:.92}
+#peek{position:fixed;inset:0;z-index:11;display:grid;place-items:center;background:rgba(8,5,10,.45);pointer-events:none}
+#peek[hidden]{display:none}
+#peek .pk{width:240px;height:412px;position:relative;animation:pk .18s}@keyframes pk{from{scale:.9;opacity:0}}
+@media (prefers-reduced-motion:reduce){#peek .pk{animation:none}}
+/* carta no modo completo, igual à v39: medidas em cqw para escalar com a largura */
+.ci{position:absolute;inset:0;container-type:inline-size}
+.cc{position:absolute;inset:0;border-radius:5cqw;padding:4cqw;background:var(--frame);box-shadow:inset 0 0 0 .8cqw #d9b45a,inset 0 0 0 1.6cqw rgba(0,0,0,.55),inset 0 0 0 2.2cqw rgba(217,180,90,.6),0 2cqw 5cqw rgba(0,0,0,.55);display:flex;flex-direction:column;gap:2cqw}
+.cc .top{display:grid;grid-template-columns:17cqw minmax(0,1fr) 19cqw;align-items:start;gap:1cqw}
+.cc .suit{height:22cqw;background:linear-gradient(180deg,#f6ead0,#e3cf9f);clip-path:polygon(0 0,100% 0,100% 72%,50% 100%,0 72%);display:grid;place-items:center;color:var(--sink);font-size:13cqw;line-height:1;padding-bottom:4cqw}
+.cc .names{display:flex;flex-direction:column;gap:1.2cqw;padding-top:2cqw}
+.cc .nm{background:linear-gradient(180deg,#1b1714,#0d0b09);border-top:.5cqw solid #d9b45a;border-bottom:.5cqw solid #d9b45a;padding:1.4cqw 2cqw;text-align:center;font-family:'Cinzel',Georgia,serif;font-weight:700;font-size:6.4cqw;letter-spacing:.04em;color:#f6ead0;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc .cl{background:linear-gradient(180deg,#f6ead0,#e3cf9f);border-radius:1cqw;padding:.6cqw 2cqw;text-align:center;font-family:'Cinzel',Georgia,serif;font-weight:700;font-size:3.8cqw;letter-spacing:.08em;color:#5b4527;text-transform:uppercase}
+.cc .med{width:19cqw;height:19cqw;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--light),var(--deep));box-shadow:0 0 0 .8cqw #d9b45a,0 0 0 1.4cqw rgba(0,0,0,.6);display:grid;place-items:center;font-family:'Cinzel',Georgia,serif;font-weight:700;font-size:11cqw;color:#f6ead0;line-height:1}
+.cc .art{flex:1;min-height:0;position:relative;border-radius:1.5cqw;overflow:hidden;box-shadow:inset 0 0 0 .7cqw #d9b45a;background:var(--deep)}
+.cc .art img{position:absolute;inset:.7cqw;width:calc(100% - 1.4cqw);height:calc(100% - 1.4cqw);object-fit:cover;object-position:50% 16%}
+.cc .two{display:grid;grid-template-columns:1fr 1fr;gap:3cqw}
+.cc .two span{display:flex;align-items:center;justify-content:center;gap:2cqw;background:#0d0b09;border:.5cqw solid #d9b45a;border-radius:1.5cqw;padding:1.2cqw 0;color:#f6ead0;font-family:'Cinzel',Georgia,serif;font-weight:700;font-size:8cqw;line-height:1}
+.cc .two .up{color:#f6e0a0}.cc .two svg{width:8cqw;height:8cqw}
+.cc .parch{background:linear-gradient(180deg,#f6ead0,#e6d3a6);border-radius:1.5cqw;box-shadow:inset 0 0 0 .4cqw rgba(140,100,40,.5);padding:1.6cqw 3cqw}
+/* altura fixa = texto mais longo (Espião, 5 linhas com Alegreya Sans): Força, Vida e arte ficam na mesma posição em todas as cartas */
+.cc .pod{padding:2.4cqw 3.4cqw;height:40cqw;flex-shrink:0;overflow:hidden}.cc .two,.cc .top{flex-shrink:0}.cc .pod b{display:block;font-family:'Cinzel',Georgia,serif;font-weight:800;font-size:4.6cqw;color:#2a1d10;text-transform:uppercase;letter-spacing:.02em}
+.cc .pod span{font-weight:500;font-size:4.6cqw;color:#3a2a18;line-height:1.25}
+/* tutorial e dicas do 1º turno (pranchetas aprovadas em 2026-10-25) */
+.tut{position:absolute;left:16px;right:16px;top:50%;transform:translateY(-50%);z-index:11;border-radius:14px;background:var(--panel);border:1px solid rgba(207,169,79,.6);padding:16px;display:flex;flex-direction:column;gap:12px}
+.tut .k{display:flex;align-items:center;justify-content:space-between;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9d90a8;font-weight:800}
+.tut .k button{background:none;border:0;color:#9d90a8;font-weight:800;font-size:14px;padding:4px 6px;text-transform:none;letter-spacing:0}
+.tut .ill{height:200px;border-radius:10px;background:rgba(0,0,0,.28);border:1px solid rgba(207,169,79,.25);display:flex;align-items:center;justify-content:center;gap:12px}
+.tut h3{margin:0;font-family:'Cinzel',Georgia,serif;font-size:20px;color:var(--gold)}.tut p{margin:0;font-size:15px;line-height:1.4}
+.tut .nav{display:flex;align-items:center;justify-content:space-between}.tut .pd{display:flex;gap:6px}.tut .pd i{width:8px;height:8px;border-radius:50%;border:1px solid var(--pale)}.tut .pd i.on{background:var(--pale)}
+.tut .col{display:flex;flex-direction:column;align-items:center;gap:6px}.tut .cap{font-size:12px;color:#e3d8bf;text-align:center}
+.tut .cell{position:relative}.tut .vs{font-family:'Cinzel',Georgia,serif;font-size:22px;color:var(--gold)}
+.tut .n{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#1d1626;border:1px solid var(--line);font-family:'Cinzel',Georgia,serif;color:var(--gold);font-size:18px}
+.tut .z{display:flex;align-items:center;gap:10px}.tut .z svg{width:34px;height:30px}.tut .z b{font-size:12px;width:84px}
+.dica{position:absolute;z-index:9;left:40px;right:40px;border-radius:12px;background:#f4eddc;color:#2a1d10;padding:10px 14px;box-shadow:0 8px 22px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:4px;pointer-events:auto}
+.dica small{font-size:10px;letter-spacing:.14em;font-weight:800;color:#8e1d30}.dica b{font-size:15px}.dica span{font-size:13px}
+.dica button{align-self:flex-end;background:none;border:0;font-weight:800;font-size:12px;color:#8e1d30;padding:0}
+.dica::after{content:"";position:absolute;left:var(--ax,50%);width:16px;height:16px;background:#f4eddc;transform:translateX(-50%) rotate(45deg)}
+.dica.up::after{bottom:-8px}.dica.down::after{top:-8px}
+/* a dica não pode engolir o toque nas casas que ela cobre: só o botão recebe clique */
+.dica{pointer-events:none}.dica button{pointer-events:auto}
+.say{position:absolute;left:50%;top:150px;z-index:5;transform:translateX(-50%);max-width:240px;background:#f4eddc;color:#2a1d10;border-radius:10px;padding:4px 10px;font-size:13px;font-weight:600;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.5);pointer-events:none;transition:opacity .3s}
+.say b{display:block;font-family:'Cinzel',Georgia,serif;font-size:9px;letter-spacing:.12em;color:#34478a}
+.say.hide{opacity:0}
+.btn.pulse{animation:pulse 1.2s infinite}@keyframes pulse{50%{box-shadow:0 0 0 4px rgba(224,69,92,.45)}}
+@media (prefers-reduced-motion:reduce){.btn.pulse{animation:none}}
+.ov{position:absolute;inset:0;z-index:10;background:rgba(8,5,10,.6)}
+.drawer{position:absolute;top:0;left:0;bottom:0;width:300px;z-index:11;padding:18px;background:linear-gradient(180deg,#221a2a,#140f19);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:14px}
+.drawer .hd,.sheet .hd{display:flex;align-items:center;justify-content:space-between;font-family:'Cinzel',Georgia,serif;font-size:20px;color:var(--gold)}
+.drawer label{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#9d90a8;display:flex;flex-direction:column;gap:6px}
+.drawer select{background:#1d1626;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font:inherit;font-size:15px}
+.drawer .snd{flex-direction:row;align-items:center;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)}.drawer .snd span{width:64px}.drawer input[type=range]{flex:1;accent-color:#e6c06a}
+.drawer small{color:#9d90a8;font-size:12px;text-transform:none;letter-spacing:0}
+.drawer .btn{text-align:left;padding:10px 14px}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:11;max-height:70%;display:flex;flex-direction:column;gap:8px;padding:12px 16px 16px;border-radius:18px 18px 0 0;background:linear-gradient(180deg,#241b2c,#140f19);border-top:1px solid var(--line)}
+.sheet .log{overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.tg{display:flex;flex-direction:column;gap:3px;padding-bottom:8px;border-bottom:1px solid rgba(207,169,79,.15)}
+.th{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:800}
+.who{border-radius:4px;padding:0 6px}.who.y{background:#a3283d}.who.c{background:#34457e}.th .tn{color:#9d90a8}
+.tg ul{list-style:none;margin:0;padding:0 0 0 4px;display:flex;flex-direction:column;gap:2px;font-size:13.5px;color:#e6dcc6}.tg li.b{color:var(--ink);font-weight:700}
+.fim.lose{background:radial-gradient(ellipse at center,rgba(10,6,12,.7) 35%,rgba(150,12,32,.85))}
+/* barra do turno = prancheta "Barra do turno V4" com os ajustes de 2026-10-25: tempo só na barra do topo, trilha de fases, linha da carta, Encerrar grande */
+.guia{border-radius:10px;background:var(--panel);border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column;flex-shrink:0;min-height:72px}
+.guia .tb{height:5px;background:rgba(255,255,255,.08)}.guia .tb i{display:block;height:100%;background:var(--pale);transform-origin:left;transition:transform .25s linear}.guia .tb i.low{background:#e0455c}
+.guia .gr{display:flex;align-items:center;gap:10px;padding:8px 10px}
+.guia .col{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.tri{display:flex;align-items:center;gap:5px}.tri>span{flex:1;height:1px;background:rgba(207,169,79,.35)}
+.tri b{display:flex;align-items:center;gap:5px;font-weight:800;font-size:13px;color:#9d90a8}.tri b.feito{color:#9fd7a9}.tri b.agora{color:var(--pale)}
+.tri i{width:10px;height:10px;border-radius:50%;border:1px solid rgba(246,224,160,.6)}.tri .agora i{background:var(--pale);border-color:transparent}
+.tri em{font-style:normal;margin-left:3px;background:#2c4a33;color:#bfe8c6;border-radius:8px;padding:0 5px;font-size:11px}
+.guia .lin{font-size:12.5px;line-height:1.3;color:#e3d8bf;text-align:center}.guia .lin b{color:var(--pale)}
+.guia .pw{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+#fim{font-size:15px;padding:10px 14px;min-height:48px}
+.btn{background:#b52a40;color:#fff;border:1px solid #e05a70;border-radius:8px;padding:4px 14px;font-weight:800;font-size:13px;min-height:32px}
+.btn.alt{background:#1d1626;border-color:var(--line);color:var(--pale)}
+.btn:disabled{opacity:.45;cursor:default}
+.base{margin-top:auto;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:end;gap:6px;padding-bottom:6px}
+/* mão em repouso: a parte de baixo das cartas fica fora da tela (como na prancheta); dedo ou mouse em cima, a carta sobe inteira */
+.mao{display:flex;justify-content:center;align-items:flex-start;height:76px}
+.carta{width:74px;height:104px;flex-shrink:0;border:0;padding:0;border-radius:7px;margin-left:-16px;position:relative;overflow:hidden;background:#6e1424;box-shadow:0 0 0 2px rgba(207,169,79,.7),0 6px 12px rgba(0,0,0,.5);transform-origin:50% 170%;transition:translate .15s}
+.carta:first-child{margin-left:0}
+.carta img{width:100%;height:100%;object-fit:cover;object-position:50% 15%}
+.carta .st{bottom:4px;font-size:11px}
+/* número no canto de cima à esquerda: aparece mesmo com as cartas sobrepostas */
+.carta .rk{top:3px;left:6px;transform:none;font-size:13px}
+.carta.on{box-shadow:0 0 0 2px rgba(120,208,138,.95),0 6px 12px rgba(0,0,0,.5)}
+.carta.novo{animation:saca .55s cubic-bezier(.2,.8,.3,1) backwards}
+@keyframes saca{from{translate:var(--dx) var(--dy);scale:.5;opacity:.4}}
+/* a carta sai de costas do baralho e vira no caminho */
+.carta.novo::after{content:"";position:absolute;inset:0;z-index:3;background:url("arte/verso-voce.webp") center/cover;opacity:0;animation:verso .55s backwards}
+@keyframes verso{0%,50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.carta.novo,.carta.novo::after{animation:none}}
+.carta:hover,.carta:active,.carta:focus-visible,.carta.sel{translate:0 -34px;z-index:2}
+@media (prefers-reduced-motion:reduce){.carta{transition:none}}
+.carta.sel{box-shadow:0 0 0 3px #78d08a,0 8px 16px rgba(0,0,0,.6)}
+.fim{position:absolute;inset:0;background:rgba(10,6,12,.82);display:grid;place-items:center;z-index:10}
+.fim>div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 24px;text-align:center;display:flex;flex-direction:column;gap:12px}
+.fim h2{margin:0;font-family:'Cinzel',Georgia,serif;color:var(--gold)}
+</style>
+</head>
+<body>
+<div id="app"></div><div id="fx"></div><div id="peek" hidden></div>
+<script src="engine_o.js"></script>
+<script>
+// Regras aprovadas em 2026-10-24 (prototipos/hex/README.md, "Regras aprovadas do Campo aberto").
+Object.assign(RULES,{moveAll:true,aiAppr:1.2,aiDang:0.5,recycle:true,homeDef:1,thorns:1,noBackOnKill:true,siege:2,firstNoPlay:true,spyMid:2,coins0:1});
+const ME=0,IA=1,W=82,H=W*.866,GAP=Math.round(W*.06),SX=.75*W+GAP,SY=H+GAP;
+const TXT={A:'Pode receber a Sagração do Rei: fica 3/3 e perde 1/1 por turno.','2':'Passa por cima de cartas. A partir do 2º turno, entra também no meio. Ataca monarca só na base inimiga. Sem revide fora da sua base.','3':'Guarda: os inimigos vizinhos atacam o Escudeiro primeiro.','4':'Também ataca a 2 casas em linha reta, se a casa do meio estiver livre. Na sua base, só corpo a corpo.','5':'Anda 2 casas. Ataca no turno em que entra.','6':'Ao entrar, cura 3 de uma carta sua.','7':'Ao entrar, compra 1 carta.','8':'Não ataca. Quem a ataca leva 1 (espinhos). O inimigo que chega ao lado para ali.','9':'As cartas suas vizinhas causam +1 de dano.','10':'Carta forte e resistente.','J':'Quando derruba uma carta, ataca de novo.',K:'Rei. Poderes: Ordem (+1 de Força numa carta, 2 moedas) e Sagração do Ás (2 moedas).',Q:'Rainha. Poder: Decreto (cura 2 numa carta ou compra 1, 2 moedas).'};
+const SW='<svg width="10" height="10" viewBox="0 0 16 16" aria-hidden="true" style="color:#f2cf7a"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M13.5 2.5 6 10M4 8l4 4M3 13l2-2"/></svg>';
+let maoAntes=[],G,sel=null,msg='',fresh=new Set(),hit=new Set(),busy=false,seen=0,endFx=false,K=1;
+const $=s=>document.querySelector(s);
+const pos=k=>{const [c,Y]=k.split(',').map(Number);return {x:c*SX,y:Y/2*SY};};
+const nome=r=>CARDS[r].name;
+
+// Som: amostras em som/*.mp3 (trilha medieval e efeitos); sem o arquivo, cai no som sintetizado.
+// Barramentos: efeitos e música com volumes próprios; a música abaixa um pouco quando um efeito toca.
+const SND=(()=>{let ac=null,sfxBus=null,musBus=null,duck=null;const buf={},loading={},loops={};let scene=null,tension=0;
+  const pref=k=>{try{return localStorage.getItem('c52.'+k);}catch(e){return null;}},save=(k,v)=>{try{localStorage.setItem('c52.'+k,v);}catch(e){}};
+  let vol=+(pref('vol')??0.8),mvol=+(pref('mvol')??0.5);
+  const FILES={select:['carta_selecionar'],click:['clique_ui'],draw:['carta_comprar'],play:['carta_jogar'],move:['mover'],attack:['espada_golpe','espada_golpe_1','espada_golpe_2'],
+    counter:['escudo_revide'],fall:['carta_cai'],strike:['as_golpe'],arrow:['flecha'],heal:['cura'],fatigue:['fadiga'],monarchHit:['monarca_ferido'],monarchFall:['monarca_cai'],
+    tick:['relogio_tique'],heart:['coracao'],yourTurn:['sino_turno'],win:['fanfarra_vitoria'],lose:['lamento_derrota'],menu:['musica_menu'],batalha:['musica_batalha'],tensao:['musica_tensao']};
+  function load(name){if(buf[name]!==undefined||loading[name])return;loading[name]=1;
+    fetch(`som/${name}.mp3`).then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(x=>ac.decodeAudioData(x)).then(b=>{buf[name]=b;if(['musica_menu','musica_batalha','musica_tensao'].includes(name))applyScene();}).catch(()=>{buf[name]=null;});}
+  const init=()=>{if(ac)return ac;try{try{window.__c52ac&&window.__c52ac.close();}catch(e){} // recarga do artefato: a trilha antiga não pode seguir tocando
+    ac=window.__c52ac=new (window.AudioContext||window.webkitAudioContext)();
+    duck=ac.createGain();duck.connect(ac.destination);sfxBus=ac.createGain();sfxBus.gain.value=vol;sfxBus.connect(ac.destination);
+    musBus=ac.createGain();musBus.gain.value=mvol;musBus.connect(duck);Object.values(FILES).flat().forEach(load);}catch(e){ac=null;}return ac;};
+  const sample=k=>{const names=(FILES[k]||[]).filter(n=>buf[n]);return names.length?buf[names[Math.floor(Math.random()*names.length)]]:null;};
+  function playBuf(b,bus,gain=1,fadeAt=0){const src=ac.createBufferSource(),g=ac.createGain();src.buffer=b;g.gain.value=gain;src.connect(g);g.connect(bus);src.start();
+    if(fadeAt){const t=ac.currentTime;g.gain.setValueAtTime(gain,t+fadeAt);g.gain.linearRampToValueAtTime(0.0001,t+fadeAt+1.5);}return src;}
+  function ducking(){const t=ac.currentTime;duck.gain.cancelScheduledValues(t);duck.gain.setValueAtTime(duck.gain.value,t);duck.gain.linearRampToValueAtTime(.55,t+.05);duck.gain.linearRampToValueAtTime(1,t+.7);}
+  // trilha: menu, batalha e tensão em loop, cada uma com volume próprio; trocar de cena (ou entrar a tensão) é um crossfade
+  // loop nativo (sem timers) entre dois pontos que soam iguais, achados por análise (mesmo compasso/timbre);
+  // os últimos 80 ms do laço fundem (potência constante) com o trecho antes do começo: a emenda não estala
+  const LOOP={musica_menu:[11.21524,29.21959],musica_batalha:[5.68889,24.88900],musica_tensao:[8.52172,27.72172]};
+  function seamless(b,[a,e]){const sr=b.sampleRate,A=Math.round(a*sr),E=Math.round(e*sr),n=Math.round(.08*sr);
+    const c=ac.createBuffer(b.numberOfChannels,b.length,sr);
+    for(let k=0;k<b.numberOfChannels;k++){const x=b.getChannelData(k).slice();for(let i=0;i<n;i++){const t=i/n;x[E-n+i]=x[E-n+i]*Math.cos(t*Math.PI/2)+x[A-n+i]*Math.sin(t*Math.PI/2);}c.copyToChannel(x,k);}
+    return c;}
+  function loopGain(name){if(loops[name])return loops[name];const b=buf[name];if(!b)return null;const g=ac.createGain();g.gain.value=0;g.connect(musBus);
+    const lp=LOOP[name],src=ac.createBufferSource();src.buffer=lp?seamless(b,lp):b;src.loop=true;
+    if(lp){src.loopStart=lp[0];src.loopEnd=lp[1];}src.connect(g);src.start(ac.currentTime+.05);return loops[name]={g};}
+  function fade(name,to,sec=1.5){const l=to>0?loopGain(name):loops[name];if(!l)return;const t=ac.currentTime;l.g.gain.cancelScheduledValues(t);l.g.gain.setValueAtTime(l.g.gain.value,t);l.g.gain.linearRampToValueAtTime(to,t+sec);}
+  function applyScene(){if(!ac||!mvol)return;const b=scene==='batalha'; // tensão entra NO LUGAR da batalha: as duas faixas somadas soam como duas músicas
+    fade('musica_menu',scene==='menu'?1:0);fade('musica_batalha',b?1-tension:0,1.2);fade('musica_tensao',b?tension*.9:0,1.2);}
+  // reserva sintetizada (quando o arquivo não existe)
+  const env=(node,t,a,peak,d)=>{const g=ac.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(0.0001,t+a+d);node.connect(g);g.connect(sfxBus);return g;};
+  const tone=(f,type,a,peak,d,delay=0,f2)=>{const t=ac.currentTime+delay,o=ac.createOscillator();o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+a+d);env(o,t,a,peak,d);o.start(t);o.stop(t+a+d+.05);};
+  const noise=(a,peak,d,freq,q=1,delay=0,f2)=>{const t=ac.currentTime+delay,len=Math.ceil((a+d+.1)*ac.sampleRate),b=ac.createBuffer(1,len,ac.sampleRate),x=b.getChannelData(0);for(let i=0;i<len;i++)x[i]=Math.random()*2-1;
+    const src=ac.createBufferSource();src.buffer=b;const fl=ac.createBiquadFilter();fl.type='bandpass';fl.frequency.setValueAtTime(freq,t);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,t+a+d);fl.Q.value=q;src.connect(fl);env(fl,t,a,peak,d);src.start(t);};
+  const chord=(fs,type,a,peak,d,delay=0)=>fs.forEach(f=>tone(f,type,a,peak/fs.length,d,delay));
+  const SYN={
+    select:()=>tone(880,'triangle',.005,.15,.08),click:()=>tone(520,'square',.003,.08,.05),
+    move:()=>{noise(.02,.22,.2,1200,1.2,0,500);tone(160,'sine',.005,.25,.12,.12,90);},
+    draw:()=>noise(.02,.25,.18,2400,1.5,0,900),play:()=>{tone(140,'sine',.005,.6,.25,0,60);noise(.005,.3,.12,800,.8);},
+    attack:()=>{noise(.01,.35,.18,600,1,0,3000);tone(90,'sine',.005,.8,.3,.12,40);noise(.003,.5,.15,1500,.7,.12);},
+    counter:()=>{tone(620,'square',.002,.18,.25);tone(931,'triangle',.002,.12,.35);},
+    fall:()=>{noise(.02,.5,.7,400,.6,0,120);tone(110,'sawtooth',.01,.25,.5,0,45);},
+    strike:()=>{[523,659,784,1047].forEach((f,i)=>tone(f,'triangle',.005,.18,.18,i*.05));noise(.003,.6,.25,1200,.6,.22);tone(70,'sine',.005,.9,.4,.22,35);},
+    arrow:()=>{noise(.01,.3,.15,3000,4,0,5000);tone(300,'square',.002,.12,.06,.16);},heal:()=>[784,988,1175,1568].forEach((f,i)=>tone(f,'sine',.01,.14,.4,i*.07)),
+    fatigue:()=>tone(80,'sine',.01,.6,.6,0,50),monarchHit:()=>{tone(55,'sine',.005,1,.6,0,30);chord([196,247,294],'sawtooth',.01,.35,.5,.03);noise(.003,.6,.3,900,.5);},
+    monarchFall:()=>{[65,98,131,164,207].forEach((f,i)=>tone(f*(1+i*.003),'sine',.01,.5/(i+1),3.2));noise(.05,.4,1.5,300,.4,0,80);},
+    tick:()=>tone(1400,'square',.001,.06,.03),heart:()=>{tone(60,'sine',.005,.6,.15,0,40);tone(55,'sine',.005,.5,.15,.18,38);},
+    yourTurn:()=>{tone(392,'triangle',.02,.25,.35);tone(587,'triangle',.02,.25,.5,.18);},
+    win:()=>[[392,494,587],[440,554,659],[523,659,784,1047]].forEach((c,i)=>chord(c,'sawtooth',.02,.4,i===2?1.6:.4,i*.32)),
+    lose:()=>[[294,349,440],[262,311,392],[196,233,294]].forEach((c,i)=>chord(c,'triangle',.03,.4,i===2?1.8:.5,i*.45)),
+  };
+  return {
+    play(k){if(!vol||!init())return;if(ac.state==='suspended')ac.resume();
+      try{if(k==='win'||k==='lose'){scene='fim';applyScene();}const b=sample(k);if(b&&(k==='win'||k==='lose')){const src=playBuf(b,sfxBus,1,8.5);src.stop(ac.currentTime+10.2);}else if(b){playBuf(b,sfxBus);if(!['select','click','tick','heart'].includes(k))ducking();}else SYN[k]&&SYN[k]();}catch(e){}},
+    unlock(){init();if(ac&&ac.state==='suspended')ac.resume();applyScene();},
+    scene(sc,tn){if(sc===scene&&Math.abs(tn-tension)<.01)return;scene=sc;tension=tn;if(ac)applyScene();},
+    setVol(v){vol=v;save('vol',v);if(sfxBus)sfxBus.gain.value=v;},vol:()=>vol,
+    setMusic(v){mvol=v;save('mvol',v);if(init()){musBus.gain.value=v;applyScene();}},musicVol:()=>mvol};})();
+
+const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+const buzz=()=>{try{navigator.vibrate&&navigator.vibrate(12);}catch(e){}};
+function shake(strong){if(reduced())return;const c=strong?'shk2':'shk';document.body.classList.remove('shk','shk2');void document.body.offsetWidth;document.body.classList.add(c);setTimeout(()=>document.body.classList.remove(c),520);}
+function sparks(rect,color,n=14){if(reduced()||!rect)return;const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+  for(let k=0;k<n;k++){const i=document.createElement('i'),a=Math.random()*Math.PI*2,d=30+Math.random()*60;i.style.cssText=`left:${cx}px;top:${cy}px;--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d}px;--c:${color}`;$('#fx').appendChild(i);setTimeout(()=>i.remove(),850);}}
+function confetti(){if(reduced())return;const cs=['#f6e0a0','#cfa94f','#c8304a','#f4eddc'];for(let k=0;k<70;k++){const b=document.createElement('b');b.style.cssText=`left:${Math.random()*100}vw;top:-20px;--dx:${(Math.random()-.5)*160}px;--rt:${Math.random()*720}deg;--c:${cs[k%4]};animation-delay:${Math.random()*.8}s`;$('#fx').appendChild(b);setTimeout(()=>b.remove(),3600);}}
+const tense=()=>Math.min(...[0,1].flatMap(p=>['K','Q'].filter(r=>G.sides[p].u[r]).map(r=>rem(G.sides[p],r))))<=2||(tl&&G.turn===ME&&!busy&&left<=10)?1:0;
+// lê o registro desde o último quadro: som, tremor, faíscas, clarão e voo (posições tiradas da mesa antiga, antes de redesenhar)
+function fxScan(){
+  const evs=G.log.slice(seen);seen=G.log.length;
+  const old=(p,r)=>document.querySelector(`[data-u="${p}${r}"]`)?.getBoundingClientRect();
+  let snd=null,pr=-1;const want=(k,n)=>{if(n>pr){pr=n;snd=k;}};
+  for(const l of evs){
+    if(l.t==='play'){want('play',1);fresh.add(l.slot);}
+    else if(l.t==='move')want('move',1);
+    else if(l.t==='atk'){want('attack',2);const u=G.sides[1-l.p].u[l.target];if(u)hit.add(u.pos);if(l.p===IA&&isMon(l.target))shake(true);}
+    else if(l.t==='fatigue'){want('fatigue',3);if(l.p===ME)shake(false);}
+    else if(l.t==='down'){const m=isMon(l.r);want(m?'monarchFall':'fall',m?6:3);sparks(old(l.p,l.r),l.p?'#9fb4ff':'#ff8a6a',m?30:14);}
+    else if(l.t==='turn'&&l.p===ME)want('yourTurn',.5);
+  }
+  if(evs.some(l=>l.t==='atk'&&isMon(l.target))&&pr<6)snd='monarchHit';
+  falas(evs);
+  if(G.winner!=null&&!endFx){endFx=true;setTimeout(()=>{SND.play(G.winner===ME?'win':'lose');if(G.winner===ME)confetti();},snd?700:0);}
+  if(snd)SND.play(snd);
+}
+// falas da IA (as da v39, sem os termos dos corredores)
+const FALAS={
+  start:['Boa partida. Eu jogo com os azuis.','Que vença a melhor corte.','Minha coroa não cai hoje.','Vamos ver do que sua corte é feita.','Sente-se. Isso não vai demorar.'],
+  play:['Reforços chegando.','Essa carta vai incomodar.','Posicionada. Sua vez de suar.','Movimento calculado.','Gostou da minha escolha?','Mais um soldado leal.'],
+  kill:['Uma a menos na sua corte.','Caiu bonito.','Era só isso?','Abrindo caminho até o seu Rei.','Próxima!','Ninguém resiste por muito tempo.'],
+  lost:['Hmpf. Sorte sua.','Essa doeu.','Foi um sacrifício planejado.','Anotado. Vou cobrar.','Tudo bem, tenho outras.','Vai pagar por isso.'],
+  hurt:['Ninguém toca na coroa!','Guardas! Onde estão os guardas?','Isso foi só um arranhão.','Agora é pessoal.','Ousadia sua.'],
+  monarch:['Seu monarca caiu. Falta um.','A coroa balança, não é?','Um trono vazio. Que pena.'],
+  mylost:['Isso… não fica assim.','Um monarca caiu, mas a corte resiste.','Você vai se arrepender disso.'],
+  sacre:['Um Ás sagrado? Que comovente.','Essa chama não dura.','Bonito. Agora vejamos quanto dura.'],
+  fatigue:['Meu baralho acabou… mas minha corte não.','Sem cartas, mas com orgulho.'],
+  idle:['Está demorando…','Pensando muito? Eu espero.','O relógio corre, majestade.','Sua mão parece pesada.','Tic-tac.','Eu já sei o que você vai fazer.','Medo de errar?'],
+  pensa:['Hmm…','Deixa eu ver…','Interessante…','Essa Muralha incomoda.','Calculando…','Qual o melhor lance?','Paciência…'],
+  win:['A coroa é minha. Boa partida!','Ajoelhe-se. Foi divertido.'],draw:['Empate. Ninguém leva a coroa hoje.','Ficamos assim, por enquanto.'],lose:['Bem jogado. A coroa é sua.','Hoje você mereceu. Revanche?']};
+const last={};
+function pick(k){const a=FALAS[k];let i;do i=Math.floor(Math.random()*a.length);while(a.length>1&&i===last[k]);last[k]=i;return a[i];}
+let say={txt:'',until:0},sayT=null;
+function speak(txt,ms=5200){say={txt,until:Date.now()+ms};const b=$('.say');if(b){b.lastChild.textContent=txt;b.classList.remove('hide');}
+  clearTimeout(sayT);sayT=setTimeout(()=>$('.say')?.classList.add('hide'),ms);}
+// reage ao registro: só a reação mais importante, e nem sempre
+function falas(evs){let best=null,pr=-1;const set=(k,n,c)=>{if(n>pr){pr=n;best=[k,c];}};
+  for(const l of evs){
+    if(l.t==='down'){if(isMon(l.r))set(l.p===ME?'monarch':'mylost',9,1);else set(l.p===ME?'kill':'lost',6,.75);}
+    else if(l.t==='atk'&&l.p===ME&&isMon(l.target))set('hurt',5,.8);
+    else if(l.t==='sacre'&&l.p===ME)set('sacre',7,1);
+    else if(l.t==='fatigue'&&l.p===IA)set('fatigue',4,1);
+    else if(l.t==='play'&&l.p===IA)set('play',2,.35);}
+  if(G.winner!=null&&!endFx)best=[G.winner===IA?'win':G.winner===ME?'lose':'draw',1];
+  if(pr<5&&Date.now()-claudeSaid<3000)return; // não atropela a fala do Claude ao vivo
+  if(best&&Math.random()<best[1])speak(pick(best[0]));}
+// relógio: o tempo escolhido no Menu vale a partir da próxima partida
+const pref=k=>{try{return localStorage.getItem('c52.'+k);}catch(e){return null;}},keep=(k,v)=>{try{v==null?localStorage.removeItem('c52.'+k):localStorage.setItem('c52.'+k,v);}catch(e){}};
+let tl=0,left=0,ov=null,idleAt=0;
+setInterval(()=>{
+  if(!G||G.winner!=null||busy||G.turn!==ME||ov||tut!=null)return;
+  const now=Date.now();if(!idleAt)idleAt=now+12000+Math.random()*12000;else if(now>idleAt){idleAt=now+14000+Math.random()*14000;if(Math.random()<.6)speak(pick('idle'),4200);}
+  if(!tl)return;left-=.25;
+  const n=$('#tbar');if(n){n.style.transform=`scaleX(${Math.max(0,left/tl)})`;n.classList.toggle('low',left<=10);n.parentNode.setAttribute('aria-label',`Tempo restante: ${Math.ceil(Math.max(0,left))} segundos`);}
+  if(left<=10&&left>0&&left%1===0)SND.play(left<=5?'heart':'tick');
+  if(left===10)SND.scene('batalha',tense());
+  if(left<=0){G.log.push({t:'timeout',p:ME});encerrar();}
+},250);
+// o marcador de turno vai antes do que acontece no início do turno novo (cerco, fadiga)
+function virar(){const k=G.log.length;endTurn(G);G.log.splice(k,0,{t:'turn',p:G.turn,n:G.turnNo+1});left=tl;idleAt=0;return k+1;}
+function encerrar(){if(dicas&&G.turn===ME){dicas=false;keep('dicas','1');}sel=null;const n=virar();msg=resumo(n,'Início do turno da IA');render();if(G.winner==null)vezIA();}
+// Oponente Claude ao vivo: ele escolhe a carta jogada e comenta; mover, atacar e poderes ficam com a IA do motor.
+// ponytail: Claude decide só a jogada; planejar movimentos e ataques por ele pede várias chamadas por turno.
+let sample=null,opp='local',claudeSaid=0;
+window.claude?.use?.('sample').then(x=>{sample=x;if(x&&G&&G.turnNo===0&&pref('oponente')!=='local')opp='claude';if(ov==='menu')render();},()=>{}); // chega depois da 1ª tela: a partida que ainda não andou passa para o Claude
+const REGRAS=`Corte 52, campo aberto de hexágonos. Casas "coluna,linha": colunas 0-4, linhas 0-12. Linhas 0-4 são a base de cima, 5-7 o meio, 8-12 a base de baixo.
+Cada lado tem Rei (Vida 6) e Rainha (Vida 5) em casas fixas da própria base. Eles não atacam. Vence quem derrubar Rei E Rainha do outro.
+Turno: compra opcional de 1 carta; joga até 1 carta numa casa vazia da própria base (quem começa não joga no 1º turno); toda carta anda 1 casa de graça (Cavaleiro 2); cada carta pronta ataca 1 vez um inimigo vizinho. Carta recém-jogada não ataca (exceto Cavaleiro).
+Combate sem dados: o atacante causa sua Força; o alvo revida com a Força dele, se não cair. Na própria base, a carta leva 1 de dano a menos.
+Cerco: no início do seu turno, cada carta sua na base inimiga causa 2 no monarca inimigo mais perto. Avançar até a base inimiga é o caminho principal para vencer.
+Cartas (Força/Vida): A Ás 1/1 (o Rei pode sagrar: 3/3) · 2 Espião 2/2, passa por cima, a partir do 2º turno entra também no meio, sem revide fora da base dele · 3 Escudeiro 1/5, os inimigos vizinhos atacam ele primeiro · 4 Arqueiro 2/3, ataca a 2 casas em linha reta · 5 Cavaleiro 3/3, anda 2 e ataca ao entrar · 6 Clérigo 1/3, cura 3 ao entrar · 7 Mensageiro 2/3, compra 1 ao entrar · 8 Muralha 0/6, não ataca, espinhos 1, quem chega ao lado para · 9 Capitão 1/4, vizinhos +1 · 10 Campeão 2/4 · J Valete 3/2, se derrubar ataca de novo.`;
+async function claudePlay(){
+  const S=G.sides[IA],opts=playOptions(G,IA).slice(0,60);if(!opts.length)return null;
+  const zona={home:'sua base',mid:'meio',enemy:'base do humano'},lado=p=>Object.entries(G.at).filter(([,o])=>o.p===p).map(([k,o])=>`${nome(o.r)} em ${k} ${isMon(o.r)?'':forceOf(G.sides[p],o.r)+'/'}${rem(G.sides[p],o.r)}`).join('; ');
+  const prompt=`${REGRAS}\n\nVocê é Claude, jogando com os azuis (base de cima) contra um humano (base de baixo). Escolha qual carta jogar agora, ou nenhuma.
+Turno ${G.turnNo+1}. Suas moedas: ${S.coins}. Sua mão: ${S.hand.map(nome).join(', ')}.\nSuas cartas: ${lado(IA)}.\nCartas do humano: ${lado(ME)}. Mão do humano: ${G.sides[ME].hand.length} cartas.
+\nOpções:\n0. Não jogar carta\n${opts.map((o,i)=>`${i+1}. ${nome(o.r)} em ${o.slot} (${zona[zone(o.slot,IA)]})${o.target?`, curando ${nome(o.target)}`:''}`).join('\n')}
+\nResponda só JSON: {"i": número, "fala": "comentário curto em pt-BR, rival bem-humorado, até 12 palavras"}`;
+  try{const res=await Promise.race([sample.json(prompt,{modelTier:'quick',cache:false}),new Promise(r=>setTimeout(r,15000))]);
+    if(res&&Number.isInteger(+res.i)&&+res.i>=0&&+res.i<=opts.length){if(res.fala){speak(String(res.fala).slice(0,160));claudeSaid=Date.now();}return +res.i?opts[+res.i-1]:null;}}
+  catch(e){if(e&&e.code==='not_granted')sample=null;}
+  return undefined;} // sem resposta válida a tempo: o motor escolhe
+function prev(k){ // dano no alvo e revide em você, como na v39
+  const S=G.sides[ME],u=S.u[sel.r],tr=G.at[k].r,d=dmgOf(G,ME,sel.r);
+  const n=isMon(tr)?d:Math.max(0,d-(RULES.homeDef&&zone(k,IA)==='home'?RULES.homeDef:0));
+  const kills=n>=rem(G.sides[IA],tr);let b=kills&&RULES.noBackOnKill?0:backOf(G,ME,sel.r,k);
+  if(b&&RULES.homeDef&&zone(u.pos,ME)==='home')b=Math.max(0,b-RULES.homeDef);
+  return (kills?'derruba':'−'+n)+(b?` · revide −${b}${b>=rem(S,sel.r)?' (cai)':''}`:'');}
+
+// tutorial: abre na 1ª visita e pelo Menu ("Como jogar"); a IA espera ele fechar
+let tut=pref('tutorial')?null:0,dicas=!pref('dicas');
+const hx=(r,ia,v,cls='',w=86,dmg='')=>`<div class="cell ${cls}" style="width:${w}px;height:${Math.round(w*.866)}px" data-dmg="${dmg}"><div class="hx ${ia?'ia':''}"><div><img src="arte/${r}.webp" alt=""></div></div><span class="rk">${isMon(r)?'':r}</span><span class="st">${isMon(r)?'':`<span>${SW}${CARDS[r].f}</span>`}<span class="v">♥${v}</span></span></div>`;
+const col=(...a)=>`<div class="col">${a.join('')}</div>`,cap=t=>`<span class="cap">${t}</span>`;
+const zona=(cor,nome,fundo)=>`<div class="z">${'<svg viewBox="0 0 100 86.6" aria-hidden="true"><polygon points="26,2 74,2 98,43.3 74,84.6 26,84.6 2,43.3" style="fill:FUNDO;stroke:COR;stroke-width:5;stroke-dasharray:12 9"/></svg>'.replace('FUNDO',fundo).replace('COR',cor).repeat(5)}<b style="color:${cor}">${nome}</b></div>`;
+const PASSOS=[
+  ['Objetivo','Derrube o Rei e a Rainha','O Rei e a Rainha da IA ficam na base dela, no topo do campo. Zere a vida dos dois para vencer.',()=>col(hx('K',1,6),cap('Rei · vida 6'))+col(hx('Q',1,5),cap('Rainha · vida 5'))],
+  ['Seu turno','Comprar, jogar, mover, atacar','Compre 1 carta, se quiser. Jogue até 1 carta na sua base. Toda carta anda 1 casa de graça. Ataque com as cartas de borda verde.',()=>[['1','Comprar','opcional'],['2','Jogar','até 1 carta'],['3','Mover','1 casa'],['4','Atacar','cartas prontas']].map(([n,t,c])=>col(`<span class="n">${n}</span>`,`<b style="font-size:13px;color:var(--pale)">${t}</b>`,cap(c))).join('')],
+  ['Campo','Três zonas no campo aberto','Você joga cartas na sua base. A partir do 2º turno, o Espião entra também no meio. Na sua base, a carta leva 1 de dano a menos.',()=>`<div class="col" style="gap:4px">${zona('#a9b8ff','Base da IA','rgba(20,31,69,.6)')}${zona('#f6e0a0','Meio','rgba(246,224,160,.08)')}${zona('#ffa0af','Sua base','rgba(110,20,36,.5)')}</div>`],
+  ['Combate','Sem dados: troca de golpes','O atacante causa a Força dele num inimigo vizinho. O alvo revida com a Força dele, se não cair. A etiqueta mostra o resultado antes do ataque.',()=>col(hx('5',0,3,'ready'),cap('Cavaleiro · Força 3'))+'<span class="vs">×</span>'+col(hx('4',1,3,'alvo',86,'−3 · revide −2'),cap('Arqueiro · Força 2'))],
+  ['Cerco','Chegue à base da IA','No início do seu turno, cada carta sua na base da IA tira 2 do monarca dela mais perto. Avançar é o caminho para vencer.',()=>col(hx('J',0,2),cap('Valete na base da IA'))+'<span class="vs">→</span>'+col(hx('Q',1,5,'alvo',86,'cerco −2'),cap('Rainha mais perto'))],
+  ['Moedas e poderes','Rei e Rainha têm poderes','Você ganha 1 moeda por turno, até 5. Toque no Rei: Ordem e Sagração do Ás. Toque na Rainha: Decreto. Segure qualquer carta para ver a ficha.',()=>col(hx('K',0,6,'sel',74),cap('Ordem · 2 moedas<br>Sagração · 2 moedas'))+col(hx('Q',0,5,'sel',74),cap('Decreto · 2 moedas<br>cura 2 ou compra 1'))]];
+function tutHTML(){const [k,h,t,ill]=PASSOS[tut],last=tut===PASSOS.length-1;
+  return `<div class="ov"></div><section class="tut" role="dialog" aria-label="Como jogar, passo ${tut+1} de ${PASSOS.length}"><div class="k">Como jogar · ${tut+1}/${PASSOS.length} · ${k}<button id="tpular">Pular</button></div><div class="ill">${ill()}</div><h3>${h}</h3><p>${t}</p>
+  <div class="nav"><button class="btn alt" id="tvolta" style="${tut?'':'visibility:hidden'}">Voltar</button><div class="pd" aria-hidden="true">${PASSOS.map((_,i)=>`<i class="${i===tut?'on':''}"></i>`).join('')}</div><button class="btn" id="${last?'tpular':'tsegue'}">${last?'Jogar':'Próximo'}</button></div></section>`;}
+// dicas do 1º turno: jogar → atacar → encerrar; param quando você encerra o turno
+function dicaPasso(){if(!dicas||tut!=null||ov||sel||busy||G.turn!==ME||G.winner!=null)return null;const S=G.sides[ME];
+  if(!G.played&&playOptions(G,ME).length)return ['.carta.on','Jogue uma carta da mão','Toque numa carta de borda verde e depois numa casa verde da sua base.'];
+  if(units(S).some(r=>canAttack(G,ME,r)))return ['.cell.ready','Ataque com uma carta pronta','Toque na carta de borda verde e depois num inimigo vermelho.'];
+  return ['#fim','Encerre o turno',G.turnNo===0&&RULES.firstNoPlay?'Quem começa não joga carta no 1º turno. A IA joga em seguida.':'A IA joga em seguida. As dicas param por aqui.'];}
+function dicaPor(){const d=dicaPasso(),el=d&&$(d[0]);if(!el)return;const a=$('#app').getBoundingClientRect(),r=el.getBoundingClientRect(),y=(r.top-a.top)/K,b=(r.bottom-a.top)/K,cx=(r.left+r.width/2-a.left)/K;
+  const t=document.createElement('div');t.className='dica';t.setAttribute('role','status');t.innerHTML=`<small>PRIMEIRO TURNO</small><b>${d[1]}</b><span>${d[2]}</span><button id="semdicas">Pular dicas</button>`;$('#app').appendChild(t);
+  const h=t.offsetHeight,up=y-h-14>0;t.classList.add(up?'up':'down');t.style.top=(up?y-h-14:b+14)+'px';t.style.setProperty('--ax',Math.max(14,Math.min(296,cx-40))+'px');}
+function novo(){busy=false;maoAntes=[];G=newGame(Math.random,Math.random()<.5?ME:IA);ov=null;tl=+(pref('tempo')??45);opp=sample&&pref('oponente')!=='local'?'claude':'local';left=tl;idleAt=0;speak(pick('start'),7000);sel=null;fresh=new Set();hit=new Set();seen=G.log.length;endFx=false;msg=G.turn===ME?'Você começa. No 1º turno, quem começa não joga carta.':'A IA começa.';render();if(G.turn===IA&&tut==null)vezIA();}
+
+function cartaHex(p,r,cls,dmg){const S=G.sides[p],u=S.u[r],v=rem(S,r),mon=isMon(r);
+  const tag=mon?`<span class="mon" style="${p===IA?'top:-7px;background:#34478a':'bottom:-7px;background:#8e1d30'}">${r==='K'?'REI':'RAINHA'}</span>`:'';
+  return `<div class="hx ${p===IA?'ia':''}"><div><img src="arte/${r}.webp" alt=""></div></div><span class="rk">${mon?'':r}</span><span class="st">${mon?'':`<span>${SW}${forceOf(S,r)}</span>`}<span class="v ${u.dmg?'low':''}">♥${v}</span></span>${tag}`;}
+
+function alvos(){ // casas destacadas para a seleção atual: {k: 'mover'|'alvo'|'jogar'|'ordem'}
+  const m={};if(!sel||G.turn!==ME)return m;
+  if(sel.t==='mao')playOptions(G,ME).filter(o=>o.r===sel.r).forEach(o=>m[o.slot]='jogar');
+  if(sel.t==='un'){moveTargets(G,ME,sel.r).forEach(k=>m[k]='mover');if(canAttack(G,ME,sel.r))targetsFor(G,ME,sel.r).forEach(k=>m[k]='alvo');}
+  if(sel.t==='ordem')units(G.sides[ME]).filter(r=>canOrder(G,ME,r)).forEach(r=>m[G.sides[ME].u[r].pos]='ordem');
+  return m;}
+
+const moedas=(n,eu)=>`<div class="coin ${eu?'eu':''}" role="img" aria-label="${eu?'Suas moedas':'Moedas da IA'}: ${n} de ${RULES.coinsCap}"><b>${n}</b><span class="pips" aria-hidden="true">${Array.from({length:RULES.coinsCap},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</span>${eu?'<span class="lbl">MOEDAS</span>':''}</div>`;
+function render(){fxScan();SND.scene(G.winner!=null?'fim':'batalha',tense());const A=alvos(),S=G.sides[ME],E=G.sides[IA],minha=G.turn===ME&&G.winner==null;
+  let cells='';
+  for(const k of CELLS){const {x,y}=pos(k),o=G.at[k],a=A[k],z=zone(k,ME);
+    const st=`left:${x}px;top:${y}px;width:${W}px;height:${H}px`;
+    if(o){const u=G.sides[o.p].u[o.r],me=o.p===ME&&!isMon(o.r);
+      let cls=(u.sick&&me?'sick ':'')+(me&&minha&&(canAttack(G,ME,o.r)||moveTargets(G,ME,o.r).length)?'ready ':'')+(sel&&sel.t==='un'&&sel.r===o.r&&o.p===ME?'sel ':'')+(a==='alvo'||a==='ordem'?'alvo ':'')+(fresh.has(k)?(o.p===IA?'fly ia ':'fly '):'')+(hit.has(k)?'hit ':'');
+      const dm=a==='alvo'?prev(k):a==='ordem'?'+1':'';
+      cells+=`<button class="cell ${cls}" style="${st}" data-k="${k}" data-u="${o.p}${o.r}" data-dmg="${dm}" aria-label="${nome(o.r)} ${o.p===IA?'da IA':'seu'}, vida ${rem(G.sides[o.p],o.r)}">${cartaHex(o.p,o.r)}</button>`;}
+    else{const fill=a==='jogar'||a==='mover'?'rgba(120,208,138,.25)':z==='mid'?'rgba(246,224,160,.07)':'rgba(0,0,0,.28)';
+      const stroke=a?'#78d08a':z==='home'?'rgba(255,160,175,.22)':z==='enemy'?'rgba(169,184,255,.22)':'rgba(246,224,160,.28)';
+      cells+=`<button class="cell" style="${st}" data-k="${k}" aria-label="Casa vazia${a?', '+a:''}" ${a?'':'tabindex="-1"'}><svg viewBox="0 0 100 86.6" preserveAspectRatio="none" aria-hidden="true"><polygon points="26,2 74,2 98,43.3 74,84.6 26,84.6 2,43.3" style="fill:${fill};stroke:${stroke};stroke-width:${a?2:1.2};stroke-dasharray:${a?0:'4 6'};vector-effect:non-scaling-stroke"/></svg></button>`;}}
+  const larg=Math.round(4*SX+W),alt=Math.round(7*SY-GAP);
+  const maoIA=E.hand.map((_,i,a)=>`<span class="back-c" style="transform:rotate(${-(i-(a.length-1)/2)*7}deg)"></span>`).join('');
+  // a partir da 4ª carta: encolhe só um pouco (mín. 64px) e sobrepõe mais, para caber em ~220px entre as moedas e o baralho
+  const nm=S.hand.length,cw=nm<=3?74:nm===4?68:64,ch=Math.round(cw*104/74),passo=nm<=3?cw-16:Math.min(cw-16,(220-cw)/(nm-1)),ang=nm<=3?7:Math.max(2,12/(nm-1));
+  const mao=S.hand.map((r,i)=>{const on=minha&&playOptions(G,ME).some(o=>o.r===r);return `<button class="carta ${on?'on':''} ${sel&&sel.t==='mao'&&sel.r===r?'sel':''}" data-h="${r}" style="transform:rotate(${(i-(S.hand.length-1)/2)*ang}deg);width:${cw}px;height:${ch}px;margin-left:${i?-Math.round(cw-passo):0}px" aria-label="${nome(r)}, Força ${CARDS[r].f}, Vida ${CARDS[r].v}"><img src="arte/${r}.webp" alt=""><span class="rk">${r}</span><span class="st"><span>${SW}${CARDS[r].f}</span><span>♥${CARDS[r].v}</span></span></button>`;}).join('');
+  $('#app').innerHTML=`
+  <header><button class="ic" id="menu" aria-label="Menu" aria-expanded="${ov==='menu'}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="#e6c06a" stroke-width="2.2" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg></button><h1>Corte 52</h1><button class="ic" id="som" aria-label="${SND.vol()||SND.musicVol()?'Desligar o som':'Ligar o som'}" aria-pressed="${!(SND.vol()||SND.musicVol())}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e6c06a" d="M4 9h4l5-4v14l-5-4H4z"/><path fill="none" stroke="#e6c06a" stroke-width="2" stroke-linecap="round" d="${SND.vol()||SND.musicVol()?'M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11':'M16 9l5 6M21 9l-5 6'}"/></svg></button></header>
+  <section class="mesa" aria-label="Mesa" style="--a:${Math.round(54+2.25*SY+H/2+15)}px;--b:${Math.round(54+3.75*SY+H/2-15)}px"><div class="bg-c"></div><div class="bg-v"></div>
+   <div class="topo">${moedas(E.coins,false)}<div class="maoia" role="img" aria-label="Mão da IA: ${E.hand.length} cartas">${maoIA}</div><div class="deck" role="img" aria-label="Baralho da IA: ${E.deck.length}"><span class="c back-c"></span><i>${E.deck.length}</i><span class="lbl">BARALHO</span></div></div>
+   <div class="say ${Date.now()<say.until?'':'hide'}" role="status" aria-label="Fala da IA"><b>${E.u.K?'REI':'RAINHA'}</b>${say.txt}</div>
+   <div class="campo" style="width:${larg}px;height:${alt}px">${cells}</div></section>
+  <div class="guia" aria-live="polite">${guia(minha)}</div>
+  <div class="base">${moedas(S.coins,true)}
+   <div class="mao" aria-label="Sua mão">${mao}</div>
+   <button class="deck ${minha&&canDraw(G,ME)?'on':''}" id="comprar" aria-label="Comprar carta (${S.deck.length} no baralho)"><span class="c back-v"></span><i>${S.deck.length}</i><span class="lbl">${minha&&canDraw(G,ME)?(G.draws?'2 MOEDAS':'COMPRAR'):'BARALHO'}</span></button></div>
+  ${G.winner!=null?`<div class="fim ${G.winner===IA?'lose':''}" role="dialog" aria-label="Fim de jogo"><div><h2>${G.winner===ME?'Vitória!':G.winner===IA?'Derrota':'Empate'}</h2><span>${G.winner===ME?'O Rei e a Rainha da IA caíram.':G.winner===IA?'Seu Rei e sua Rainha caíram.':'Limite de turnos.'}</span><button class="btn" id="denovo">Nova partida</button></div></div>`:''}
+  ${tut!=null?tutHTML():''}${ov==='menu'?menuHTML():ov==='log'?logHTML():ov==='novo'?`<div class="fim" role="dialog" aria-label="Nova partida"><div><h2>Nova partida?</h2><span>A partida atual será abandonada.</span><button class="btn" id="denovo">Nova partida</button><button class="btn alt" data-x>Continuar esta</button></div></div>`:''}`;
+  fresh=new Set();hit=new Set();dicaPor();
+  // cartas novas na sua mão voam do baralho (compra, Decreto, Mensageiro, mão inicial)
+  const d=$('#comprar').getBoundingClientRect();
+  S.hand.filter(r=>!maoAntes.includes(r)).forEach((r,i)=>{const el=$(`[data-h="${r}"]`),c=el.getBoundingClientRect();
+    el.style.setProperty('--dx',(d.left+d.width/2-c.left-c.width/2)/K+'px');el.style.setProperty('--dy',(d.top+d.height/2-c.top-c.height/2)/K+'px');el.style.animationDelay=i*.12+'s';el.classList.add('novo');});
+  maoAntes=[...S.hand];
+  keep('aberto',G.winner==null?JSON.stringify({G,tl,left,opp}):null);} // partida salva: recarregar a página continua daqui
+
+function menuHTML(){const o=v=>`<option value="${v}"${+(pref('tempo')??45)===v?' selected':''}>${v?v+' s':'Sem limite'}</option>`;
+  return `<div class="ov" data-x></div><nav class="drawer" aria-label="Menu do jogo"><div class="hd">Menu<button class="ic" data-x aria-label="Fechar menu">✕</button></div>
+  <label>Oponente<select id="oponente"><option value="claude"${pref('oponente')!=='local'?' selected':''}${sample?'':' disabled'}>Claude ao vivo${sample?'':' (indisponível aqui)'}</option><option value="local"${pref('oponente')==='local'||!sample?' selected':''}>IA local</option></select></label>
+  <label>Tempo de turno<select id="tempo">${[30,45,60,0].map(o).join('')}</select><small>Oponente e tempo valem a partir da próxima partida.${opp==='claude'?' Agora: Claude ao vivo.':''}</small></label>
+  <label class="snd"><span>Efeitos</span><input type="range" id="vol" min="0" max="1" step="0.05" value="${SND.vol()}"></label>
+  <label class="snd"><span>Música</span><input type="range" id="mus" min="0" max="1" step="0.05" value="${SND.musicVol()}"></label>
+  <button class="btn alt" id="ajuda">Como jogar</button><button class="btn alt" id="reg">Registro de combate</button><button class="btn" id="nova">Nova partida</button></nav>`;}
+function itemHTML(l){const q=(p,r)=>`${nome(r)}${p===IA?' da IA':''}`,f={play:()=>`Jogou ${nome(l.r)}.`,move:()=>`${nome(l.r)} andou.`,
+    atk:()=>l.siege?`Cerco: ${nome(l.r)} tirou ${l.n} de ${q(1-l.p,l.target)}.`:`${nome(l.r)} atacou ${q(1-l.p,l.target)}: ${l.n} de dano.`,
+    down:()=>`${q(l.p,l.r)} caiu.`,fatigue:()=>`Fadiga: ${nome(l.r)} perdeu 1.`,timeout:()=>'O tempo acabou.',sacre:()=>'Sagração: o Ás ficou 3/3.',
+    order:()=>`Ordem: ${nome(l.r)} +1 de Força.`,decree:()=>l.draw?'Decreto: comprou 1 carta.':`Decreto: ${nome(l.r)} curou 2.`}[l.t];
+  return f&&`<li${l.t==='down'?' class="b"':''}>${f()}</li>`;}
+function logHTML(){const gs=[];let cur={p:G.first,n:1,it:[]};
+  for(const l of G.log){if(l.t==='turn'){gs.push(cur);cur={p:l.p,n:l.n,it:[]};}else{const t=itemHTML(l);if(t)cur.it.push(t);}}gs.push(cur);
+  const h=gs.filter(g=>g.it.length).reverse().map(g=>`<div class="tg"><div class="th"><span class="who ${g.p?'c':'y'}">${g.p?'IA':'Você'}</span><span class="tn">Turno ${g.n}</span></div><ul>${g.it.reverse().join('')}</ul></div>`).join('');
+  return `<div class="ov" data-x></div><section class="sheet" role="dialog" aria-label="Registro de combate"><div class="hd">Registro<button class="ic" data-x aria-label="Fechar">✕</button></div><div class="log">${h||'<small>Nada aconteceu ainda.</small>'}</div></section>`;}
+
+function guia(minha){
+  const fim=(on,pulse)=>`<button class="btn ${pulse?'pulse':''}" id="fim" ${on?'':'disabled'}>Encerrar</button>`;
+  if(!minha)return `<div class="gr"><div class="col"><div class="tri"><b class="agora"><i></i>${G.winner!=null?'Fim de jogo':'Vez da IA…'}</b></div><div class="lin">${msg}</div></div>${fim(false)}</div>`;
+  const S=G.sides[ME];let lin='',bt='';
+  if(sel&&(sel.t==='un'||sel.t==='mao'||sel.t==='mon'))lin=`<b>${nome(sel.r)}</b> · ${TXT[sel.r]}`;
+  if(sel&&sel.t==='mon'){
+    if(sel.r==='K'){bt+=`<button class="btn alt" data-p="ordem" ${units(S).some(r=>canOrder(G,ME,r))?'':'disabled'}>Ordem · 2</button>`;bt+=`<button class="btn alt" data-p="sagrar" ${canSacre(G,ME)?'':'disabled'}>Sagração · 2</button>`;}
+    else{const ok=royal(G,ME,'Q',COST.decree);bt+=`<button class="btn alt" data-p="curar" ${ok&&healTargets(G,ME).length?'':'disabled'}>Decreto: curar 2</button><button class="btn alt" data-p="dcompra" ${ok&&S.deck.length?'':'disabled'}>Decreto: comprar</button>`;}}
+  if(sel&&sel.t==='ordem')lin='Ordem: toque numa carta sua para dar +1 de Força.';
+  const prontas=units(S).filter(r=>canAttack(G,ME,r)||moveTargets(G,ME,r).length).length,jogar=!G.played&&playOptions(G,ME).length>0;
+  const passo=(nome,st,extra='')=>`<b class="${st}">${st==='feito'?'<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="#78d08a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M3 8.5l3.2 3L13 4.5"/></svg>':'<i></i>'}${nome}${extra}</b>`;
+  const tri=`<div class="tri" aria-label="Fases do turno">${passo('Comprar',G.draws?'feito':'')}<span></span>${passo('Jogar',G.played?'feito':jogar?'agora':'')}<span></span>${passo('Agir',!jogar&&prontas?'agora':'',prontas?`<em>${prontas}</em>`:'')}</div>`;
+  return `${tl?`<div class="tb" role="timer" aria-label="Tempo restante: ${Math.ceil(Math.max(0,left))} segundos"><i id="tbar" class="${left<=10?'low':''}" style="transform:scaleX(${Math.max(0,left/tl)})"></i></div>`:''}
+  <div class="gr"><div class="col">${tri}${bt?`<div class="pw">${bt}</div>`:`<div class="lin">${lin||msg||'Toque numa carta da mão, numa carta sua ou no seu Rei/Rainha.'}</div>`}</div>${fim(true,!jogar&&!prontas)}</div>`;}
+
+function resumo(desde,quem){ // texto curto do que aconteceu
+  const t=G.log.slice(desde).map(l=>l.t==='play'?`jogou ${nome(l.r)}`:l.t==='atk'?(l.siege?`cerco −${l.n} no(a) ${nome(l.target)}`:`${nome(l.r)} atacou ${nome(l.target)} (−${l.n})`):l.t==='down'?`${nome(l.r)} caiu`:l.t==='fatigue'?`fadiga no(a) ${nome(l.r)}`:'').filter(Boolean);
+  return t.length?`${quem}: ${t.slice(-4).join('; ')}.`:'';}
+
+function vezIA(){busy=true;msg='';render();if(Date.now()>say.until&&Math.random()<.5)speak(pick('pensa'),900);
+  const game=G;
+  setTimeout(async()=>{if(G!==game)return;const n=G.log.length;let o;
+    if(opp==='claude'&&sample){if(G.draws===0&&canDraw(G,IA))drawAction(G,IA);const t=pick('pensa');speak(t,15000);o=await claudePlay();if(G!==game)return;if(say.txt===t)speak(t,0);}
+    try{aiTurn(G,IA,Math.random,o);}catch(e){console.error(e);} // erro no turno da IA não pode travar o seu
+    const r=resumo(n,'IA');if(G.winner==null){const m=virar();msg=[r,resumo(m,'Início do seu turno')].filter(Boolean).join(' ');}else msg=r;
+    busy=false;sel=null;render();},700);}
+
+document.addEventListener('click',e=>{
+  if(consumed&&e.isTrusted){consumed=false;return;} // clique nativo depois de prévia ou arraste
+  if(e.target.closest('#som')){const on=SND.vol()||SND.musicVol();SND.setVol(on?0:.8);SND.setMusic(on?0:.5);render();return;}
+  if(e.target.closest('#menu')){SND.play('click');ov='menu';render();return;}
+  if(e.target.closest('[data-x]')){ov=null;render();return;}
+  if(e.target.closest('#reg')){ov='log';render();return;}
+  if(e.target.closest('#ajuda')){ov=null;tut=0;render();return;}
+  if(e.target.closest('#tsegue')){tut++;render();return;}
+  if(e.target.closest('#tvolta')){tut--;render();return;}
+  if(e.target.closest('#tpular')){tut=null;keep('tutorial','1');render();if(G.turn===IA&&!busy&&G.winner==null)vezIA();return;}
+  if(e.target.closest('#semdicas')){dicas=false;keep('dicas','1');render();return;}
+  if(tut!=null)return;
+  if(e.target.closest('#nova')){if(G.winner==null&&G.turnNo>0){ov='novo';render();}else novo();return;}
+  if(e.target.closest('#denovo')){novo();return;}
+  if(ov)return;
+  if(busy||G.winner!=null||G.turn!==ME)return;
+  const S=G.sides[ME],b=e.target;
+  if(b.closest('#fim')){encerrar();return;}
+  if(b.closest('#comprar')){if(drawAction(G,ME)){SND.play('draw');msg='Você comprou 1 carta.';sel=null;}render();return;}
+  const p=b.closest('[data-p]');if(p){const a=p.dataset.p;
+    if(a==='ordem'){sel={t:'ordem'};}
+    else if(a==='sagrar'){sacre(G,ME);G.log.push({t:'sacre',p:ME});SND.play('strike');sparks($('[data-u="0A"]')?.getBoundingClientRect(),'#f6e0a0',24);msg='O Ás foi sagrado: agora é 3/3.';sel=null;}
+    else if(a==='curar'){const h=healTargets(G,ME).sort((x,y)=>S.u[y].dmg-S.u[x].dmg)[0];decree(G,ME,{heal:h});G.log.push({t:'decree',p:ME,r:h});SND.play('heal');msg=`Decreto: ${nome(h)} curou 2.`;sel=null;}
+    else if(a==='dcompra'){decree(G,ME,{draw:true});G.log.push({t:'decree',p:ME,draw:true});SND.play('draw');msg='Decreto: você comprou 1 carta.';sel=null;}
+    render();return;}
+  const h=b.closest('[data-h]');if(h){const r=h.dataset.h;sel=sel&&sel.t==='mao'&&sel.r===r?null:{t:'mao',r};if(sel)SND.play('select');msg='';render();return;}
+  const c=b.closest('[data-k]');if(!c){sel=null;render();return;}
+  const k=c.dataset.k,o=G.at[k],A=alvos();
+  if(A[k]==='jogar'){const op=playOptions(G,ME).filter(x=>x.r===sel.r&&x.slot===k);const best=op.find(x=>x.target&&S.u[x.target].dmg===Math.max(...op.filter(y=>y.target).map(y=>S.u[y.target].dmg)))||op[0];buzz();play(G,ME,best);msg=`Você jogou ${nome(sel.r)}.`;sel=null;render();return;}
+  if(A[k]==='mover'){move(G,ME,sel.r,k);msg=`${nome(sel.r)} andou.`;render();return;}
+  if(A[k]==='alvo'){const n=G.log.length,r=sel.r;buzz();attack(G,ME,r,k);msg=resumo(n,'Você');if(!S.u[r]||!canAttack(G,ME,r))sel=S.u[r]&&moveTargets(G,ME,r).length?sel:null;render();return;}
+  if(A[k]==='ordem'){order(G,ME,o.r);G.log.push({t:'order',p:ME,r:o.r});SND.play('select');msg=`Ordem: ${nome(o.r)} ganhou +1 de Força neste turno.`;sel={t:'un',r:o.r};render();return;}
+  if(o&&o.p===ME){sel=isMon(o.r)?{t:'mon',r:o.r}:(sel&&sel.t==='un'&&sel.r===o.r?null:{t:'un',r:o.r});if(sel)SND.play('select');msg='';render();return;}
+  if(o&&o.p===IA){msg=`${nome(o.r)} da IA · ${TXT[o.r]}`;sel=null;render();return;}
+  sel=null;render();});
+// ponytail: a tela é 390×844 fixa e só encolhe; layout próprio para telas maiores fica para depois
+// tela mais estreita que 390: a caixa sai da margem automática e fica à esquerda; o translate traz o centro de volta
+const fit=()=>{K=Math.min(1,innerWidth/390,innerHeight/844);const dx=Math.min(0,(innerWidth-390)/2);$('#app').style.transform=K<1?`translateX(${dx}px) scale(${K})`:'';};
+// Gestos (como na v39): segurar 450 ms abre a prévia; arrastar uma carta pronta leva até a casa. O gesto "consome" o clique seguinte.
+let pt=null,consumed=false,drag=null;
+const cardAt=el=>el.dataset.h?{p:ME,r:el.dataset.h}:G.at[el.dataset.k]||null;
+function peek(d){const P=$('#peek');if(!d){P.hidden=true;return;}const S=G.sides[d.p],u=S.u[d.r],c=CARDS[d.r];
+  P.innerHTML=`<div class="pk" role="tooltip" aria-label="Prévia: ${nome(d.r)}${d.p===IA?' da IA':''}">${completa(d.p,d.r)}</div>`;P.hidden=false;}
+// carta no modo completo (prancheta "Cartas · vitrine do layout"): você ♥ vermelho, IA ♠ azul
+const META={A:['Leve · Unidade','Sagração'],'2':['Leve · Unidade','Infiltração'],'3':['Leve · Unidade','Guarda'],'4':['Leve · Unidade','Rajada'],'5':['Média · Unidade','Investida'],'6':['Média · Unidade','Bênção'],'7':['Média · Unidade','Despacho'],'8':['Pesada · Defesa','Espinhos'],'9':['Pesada · Unidade','Comando'],'10':['Pesada · Unidade','Força bruta'],J:['Pesada · Unidade','Duelista'],Q:['Monarca','Decreto'],K:['Monarca','Ordem e Sagração']};
+const PAL=[['linear-gradient(160deg,#8e1d30,#4e0d18 55%,#7a1828)','#6e1424','#c8364d','#a3172e'],['linear-gradient(160deg,#24346e,#0c1430 55%,#1f2c5c)','#141f45','#34478a','#141a2e']];
+const SWD='<svg viewBox="0 0 16 16" aria-hidden="true" style="color:#d9b45a"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M13.5 2.5 6 10M4 8l4 4M3 13l2-2M2.5 2.5 10 10M12 8l-4 4M13 13l-2-2"/></svg>',HRT='<svg viewBox="0 0 16 16" aria-hidden="true" style="color:#e2566c;fill:currentColor"><path d="M8 14.5 1.8 8.4A3.6 3.6 0 0 1 8 3.6a3.6 3.6 0 0 1 6.2 4.8z"/></svg>';
+function completa(p,r){const S=G.sides[p],u=S.u[r],c=CARDS[r],F=u?forceOf(S,r):c.f,MX=u?vmax(S,r):c.v,v=u?rem(S,r):MX,[fr,dp,lt,ink]=PAL[p];
+  return `<div class="ci" style="--frame:${fr};--deep:${dp};--light:${lt};--sink:${ink}"><div class="cc"><div class="top"><div class="suit">${p===ME?'♥':'♠'}</div><div class="names"><div class="nm">${c.name}</div><div class="cl">${META[r][0]}</div></div><div class="med">${r}</div></div>
+    <div class="art"><img src="arte/${r}.webp" alt=""></div><div class="two"><span class="${F>c.f?'up':''}" aria-label="Força ${F}">${SWD}${F}</span><span aria-label="Vida ${v} de ${MX}">${HRT}${v}</span></div><div class="parch pod"><b>${META[r][1]}</b><span>${TXT[r]}</span></div></div></div>`;}
+document.addEventListener('pointerdown',e=>{
+  consumed=false;SND.unlock();
+  const el=e.target.closest('[data-h],[data-k]'),d=el&&cardAt(el);if(!d)return;
+  const mine=G.turn===ME&&!busy&&G.winner==null;
+  pt={x:e.clientX,y:e.clientY,el,canDrag:mine&&(el.dataset.h?el.matches('.on'):d.p===ME&&el.matches('.ready'))};
+  pt.lp=setTimeout(()=>{if(!pt||drag)return;consumed=true;buzz();peek(d);},450);
+});
+document.addEventListener('pointermove',e=>{
+  if(!pt)return;const far=Math.hypot(e.clientX-pt.x,e.clientY-pt.y)>10;
+  if(far)clearTimeout(pt.lp);
+  if(!drag&&far&&pt.canDrag){peek(null);
+    const h=pt.el.dataset.h,r=h||G.at[pt.el.dataset.k].r;sel=h?{t:'mao',r}:{t:'un',r};msg='';render();
+    const src=h?$(`[data-h="${h}"]`):$(`[data-k="${pt.el.dataset.k}"]`),g=src.cloneNode(true);
+    g.classList.add('ghost');g.style.left=g.style.top='';document.body.appendChild(g);
+    drag={g,w:src.offsetWidth*K,h:src.offsetHeight*K,over:null};
+  }
+  if(!drag)return;
+  drag.g.style.cssText+=`;left:${e.clientX-drag.w/2}px;top:${e.clientY-drag.h-14}px;transform:scale(${K})`;
+  const c=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-k]'),ok=c&&['jogar','mover','alvo'].includes(alvos()[c.dataset.k])?c:null;
+  if(drag.over!==ok){drag.over?.classList.remove('over');ok?.classList.add('over');drag.over=ok;}
+});
+function endGesture(cancel){
+  if(!pt)return;clearTimeout(pt.lp);pt=null;peek(null);
+  if(!drag)return;const d=drag;drag=null;d.g.remove();consumed=true;
+  if(!cancel&&d.over)d.over.click();else{sel=null;render();}
+}
+document.addEventListener('pointerup',()=>endGesture(false));
+document.addEventListener('pointercancel',()=>endGesture(true));
+document.addEventListener('input',e=>{if(e.target.id==='vol'){SND.setVol(+e.target.value);SND.play('select');}if(e.target.id==='mus')SND.setMusic(+e.target.value);});
+document.addEventListener('change',e=>{if(e.target.id==='tempo'||e.target.id==='oponente')keep(e.target.id,e.target.value);});
+document.addEventListener('dragstart',e=>{if(e.target.closest('[data-h],[data-k]'))e.preventDefault();});
+document.addEventListener('contextmenu',e=>{if(e.target.closest('[data-h],[data-k]'))e.preventDefault();});
+addEventListener('resize',fit);fit();
+try{const d=JSON.parse(pref('aberto'));if(!d||!d.G.at||d.G.winner!=null)throw 0;G=d.G;maoAntes=[...G.sides[ME].hand];tl=d.tl;left=d.left;opp=d.opp||'local';seen=G.log.length;msg='Partida retomada.';render();if(G.turn===IA&&tut==null)vezIA();}catch(e){novo();}
+</script>
+</body>
+</html>
